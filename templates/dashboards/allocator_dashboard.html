@@ -16,7 +16,7 @@
         <div class="card bg-info text-white">
             <div class="card-body text-center">
                 <i class="fas fa-inbox fa-2x mb-2"></i>
-                <h3>12</h3>
+                <h3>{{ stats.pending_count }}</h3>
                 <p class="mb-0">Pending Allocation</p>
             </div>
         </div>
@@ -26,7 +26,7 @@
         <div class="card bg-success text-white">
             <div class="card-body text-center">
                 <i class="fas fa-check-double fa-2x mb-2"></i>
-                <h3>45</h3>
+                <h3>{{ stats.allocated_today }}</h3>
                 <p class="mb-0">Allocated Today</p>
             </div>
         </div>
@@ -36,7 +36,7 @@
         <div class="card bg-warning text-white">
             <div class="card-body text-center">
                 <i class="fas fa-user-friends fa-2x mb-2"></i>
-                <h3>8</h3>
+                <h3>{{ stats.active_writers }}</h3>
                 <p class="mb-0">Active Writers</p>
             </div>
         </div>
@@ -46,36 +46,240 @@
         <div class="card bg-danger text-white">
             <div class="card-body text-center">
                 <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
-                <h3>3</h3>
+                <h3>{{ stats.overdue_count }}</h3>
                 <p class="mb-0">Overdue Tasks</p>
             </div>
         </div>
     </div>
 </div>
 
+<!-- Pending Jobs for Allocation -->
+{% if pending_jobs %}
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <i class="fas fa-clipboard-list"></i> Job Allocation Panel
+        <div class="card border-warning">
+            <div class="card-header bg-warning text-white">
+                <i class="fas fa-clock"></i> Jobs Pending Allocation ({{ pending_jobs.count }})
             </div>
             <div class="card-body">
-                <p>As an allocator, you can assign jobs to writers and manage workload distribution.</p>
-                <div class="d-grid gap-2 d-md-flex">
-                    <button class="btn btn-primary"><i class="fas fa-plus me-2"></i>Allocate New Job</button>
-                    <button class="btn btn-outline-primary"><i class="fas fa-list me-2"></i>View All Allocations</button>
-                    <button class="btn btn-outline-secondary"><i class="fas fa-chart-pie me-2"></i>Workload Analysis</button>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Review and allocate jobs to writers below.
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Job ID</th>
+                                <th>Topic</th>
+                                <th>Word Count</th>
+                                <th>Amount</th>
+                                <th>Expected Deadline</th>
+                                <th>Strict Deadline</th>
+                                <th>Created By</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for job in pending_jobs %}
+                            <tr>
+                                <td><strong>{{ job.job_id }}</strong></td>
+                                <td>{{ job.topic|default:"N/A"|truncatewords:5 }}</td>
+                                <td>{{ job.word_count|default:"N/A" }}</td>
+                                <td>₹{{ job.amount|default:"0"|floatformat:2 }}</td>
+                                <td>
+                                    <small>{{ job.expected_deadline|date:"M d, Y H:i" }}</small>
+                                </td>
+                                <td>
+                                    <small class="text-danger">{{ job.strict_deadline|date:"M d, Y H:i" }}</small>
+                                </td>
+                                <td>{{ job.created_by.first_name }}</td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-primary" 
+                                            data-bs-toggle="modal" data-bs-target="#viewJobModal{{ job.id }}">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-success" 
+                                            data-bs-toggle="modal" data-bs-target="#allocateModal{{ job.id }}">
+                                        <i class="fas fa-user-plus"></i> Allocate
+                                    </button>
+                                    
+                                    <!-- View Job Modal -->
+                                    <div class="modal fade" id="viewJobModal{{ job.id }}" tabindex="-1">
+                                        <div class="modal-dialog modal-lg">
+                                            <div class="modal-content">
+                                                <div class="modal-header bg-primary text-white">
+                                                    <h5 class="modal-title">Job Details: {{ job.job_id }}</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="row">
+                                                        <div class="col-md-6 mb-3">
+                                                            <strong><i class="fas fa-hashtag me-2"></i>Job ID:</strong> 
+                                                            {{ job.job_id }}
+                                                        </div>
+                                                        <div class="col-md-6 mb-3">
+                                                            <strong><i class="fas fa-user me-2"></i>Created By:</strong> 
+                                                            {{ job.created_by.first_name }} {{ job.created_by.last_name }}
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {% if job.topic %}
+                                                    <div class="mb-3">
+                                                        <strong><i class="fas fa-heading me-2"></i>Topic:</strong>
+                                                        <p class="border p-2 bg-light">{{ job.topic }}</p>
+                                                    </div>
+                                                    {% endif %}
+                                                    
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-4">
+                                                            <strong><i class="fas fa-sort-numeric-up me-2"></i>Word Count:</strong>
+                                                            <p>{{ job.word_count|default:"N/A" }}</p>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <strong><i class="fas fa-book me-2"></i>Referencing:</strong>
+                                                            <p>{{ job.get_referencing_style_display|default:"N/A" }}</p>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <strong><i class="fas fa-pen-fancy me-2"></i>Writing Style:</strong>
+                                                            <p>{{ job.get_writing_style_display|default:"N/A" }}</p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    <div class="mb-3">
+                                                        <strong><i class="fas fa-align-left me-2"></i>Initial Instructions:</strong>
+                                                        <pre class="border p-3 bg-light" style="white-space: pre-wrap;">{{ job.instructions }}</pre>
+                                                    </div>
+                                                    
+                                                    {% if job.completion_instructions %}
+                                                    <div class="mb-3">
+                                                        <strong><i class="fas fa-clipboard-list me-2"></i>Completion Instructions:</strong>
+                                                        <pre class="border p-3 bg-light" style="white-space: pre-wrap;">{{ job.completion_instructions }}</pre>
+                                                    </div>
+                                                    {% endif %}
+                                                    
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-4">
+                                                            <strong><i class="fas fa-calendar-alt me-2"></i>Expected Deadline:</strong>
+                                                            <p class="text-primary">{{ job.expected_deadline|date:"F d, Y H:i" }}</p>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <strong><i class="fas fa-exclamation-triangle me-2"></i>Strict Deadline:</strong>
+                                                            <p class="text-danger">{{ job.strict_deadline|date:"F d, Y H:i" }}</p>
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <strong><i class="fas fa-rupee-sign me-2"></i>Amount:</strong>
+                                                            <p class="text-success">₹{{ job.amount|floatformat:2 }}</p>
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {% if job.attachment %}
+                                                    <div class="mb-3">
+                                                        <strong><i class="fas fa-paperclip me-2"></i>Attachment:</strong>
+                                                        <a href="{{ job.attachment.url }}" target="_blank" class="btn btn-sm btn-primary">
+                                                            <i class="fas fa-download me-1"></i>Download
+                                                        </a>
+                                                    </div>
+                                                    {% endif %}
+                                                    
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <small class="text-muted">
+                                                                <i class="fas fa-clock me-1"></i>Created: {{ job.created_at|date:"F d, Y H:i" }}
+                                                            </small>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <small class="text-muted">
+                                                                <i class="fas fa-check-circle me-1"></i>Completed Form: {{ job.completed_form_at|date:"F d, Y H:i" }}
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                                    <button type="button" class="btn btn-success" data-bs-dismiss="modal" 
+                                                            data-bs-toggle="modal" data-bs-target="#allocateModal{{ job.id }}">
+                                                        <i class="fas fa-user-plus me-1"></i>Allocate This Job
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Allocate Modal -->
+                                    <div class="modal fade" id="allocateModal{{ job.id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header bg-success text-white">
+                                                    <h5 class="modal-title">Allocate Job: {{ job.job_id }}</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+                                                <form method="post" action="#">
+                                                    {% csrf_token %}
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <strong>Job Summary:</strong>
+                                                            <ul class="list-unstyled ms-3">
+                                                                <li><strong>ID:</strong> {{ job.job_id }}</li>
+                                                                <li><strong>Word Count:</strong> {{ job.word_count }}</li>
+                                                                <li><strong>Amount:</strong> ₹{{ job.amount|floatformat:2 }}</li>
+                                                                <li><strong>Deadline:</strong> {{ job.expected_deadline|date:"M d, Y H:i" }}</li>
+                                                            </ul>
+                                                        </div>
+                                                        
+                                                        <div class="mb-3">
+                                                            <label class="form-label"><strong>Select Writer:</strong> <span class="text-danger">*</span></label>
+                                                            <select name="writer_id" class="form-select" required>
+                                                                <option value="">-- Select Writer --</option>
+                                                                {% for writer in writers %}
+                                                                <option value="{{ writer.id }}">
+                                                                    {{ writer.first_name }} {{ writer.last_name }} ({{ writer.email }})
+                                                                </option>
+                                                                {% endfor %}
+                                                            </select>
+                                                        </div>
+                                                        
+                                                        <div class="alert alert-info">
+                                                            <i class="fas fa-info-circle"></i> Writer will be notified and job will appear in their dashboard.
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-success">
+                                                            <i class="fas fa-check"></i> Allocate Job
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% else %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-success">
+            <i class="fas fa-check-circle me-2"></i>
+            <strong>All caught up!</strong> No jobs pending allocation at the moment.
+        </div>
+    </div>
+</div>
+{% endif %}
 
+<!-- Allocated Jobs -->
+{% if allocated_jobs %}
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <i class="fas fa-list"></i> Recent Allocations
+                <i class="fas fa-tasks"></i> Currently Allocated Jobs
             </div>
             <div class="card-body">
                 <div class="table-responsive">
@@ -84,26 +288,45 @@
                             <tr>
                                 <th>Job ID</th>
                                 <th>Writer</th>
+                                <th>Word Count</th>
+                                <th>Amount</th>
                                 <th>Allocated Date</th>
-                                <th>Deadline</th>
+                                <th>Expected Deadline</th>
                                 <th>Status</th>
+                                <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
+                            {% for job in allocated_jobs %}
                             <tr>
-                                <td>#JOB001</td>
-                                <td>John Writer</td>
-                                <td>2024-11-01</td>
-                                <td>2024-11-05</td>
-                                <td><span class="badge bg-warning">In Progress</span></td>
+                                <td><strong>{{ job.job_id }}</strong></td>
+                                <td>{{ job.allocated_to.first_name }} {{ job.allocated_to.last_name }}</td>
+                                <td>{{ job.word_count }}</td>
+                                <td>₹{{ job.amount|floatformat:2 }}</td>
+                                <td>{{ job.allocated_at|date:"M d, Y H:i" }}</td>
+                                <td>
+                                    <small {% if job.is_overdue %}class="text-danger fw-bold"{% endif %}>
+                                        {{ job.expected_deadline|date:"M d, Y H:i" }}
+                                        {% if job.is_overdue %}
+                                        <i class="fas fa-exclamation-triangle text-danger ms-1"></i>
+                                        {% endif %}
+                                    </small>
+                                </td>
+                                <td>
+                                    {% if job.status == 'allocated' %}
+                                    <span class="badge bg-info">Allocated</span>
+                                    {% elif job.status == 'in_progress' %}
+                                    <span class="badge bg-warning">In Progress</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-info" 
+                                            data-bs-toggle="modal" data-bs-target="#viewJobModal{{ job.id }}">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </td>
                             </tr>
-                            <tr>
-                                <td>#JOB002</td>
-                                <td>Jane Writer</td>
-                                <td>2024-11-02</td>
-                                <td>2024-11-06</td>
-                                <td><span class="badge bg-info">Assigned</span></td>
-                            </tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -111,4 +334,5 @@
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}

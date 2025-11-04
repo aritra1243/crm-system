@@ -1,25 +1,53 @@
 from django.contrib import admin
-from .models import JobDrop
+from .models import Job
 
-@admin.register(JobDrop)
-class JobDropAdmin(admin.ModelAdmin):
-    list_display = ['job_id', 'created_by', 'created_at', 'updated_at', 'has_attachment']
-    list_filter = ['created_at', 'created_by']
-    search_fields = ['job_id', 'instructions', 'created_by__email']
-    readonly_fields = ['created_at', 'updated_at']
-    date_hierarchy = 'created_at'
+@admin.register(Job)
+class JobAdmin(admin.ModelAdmin):
+    list_display = [
+        'job_id', 
+        'topic', 
+        'word_count', 
+        'amount', 
+        'status', 
+        'created_by', 
+        'allocated_to',
+        'expected_deadline',
+        'created_at'
+    ]
+    list_filter = ['status', 'created_at', 'referencing_style', 'writing_style']
+    search_fields = ['job_id', 'topic', 'instructions', 'completion_instructions']
+    readonly_fields = ['created_at', 'updated_at', 'completed_form_at', 'allocated_at']
     
     fieldsets = (
-        ('Job Information', {
-            'fields': ('job_id', 'instructions', 'attachment')
+        ('Basic Information', {
+            'fields': ('job_id', 'status', 'created_by', 'created_at')
         }),
-        ('Metadata', {
-            'fields': ('created_by', 'created_at', 'updated_at'),
-            'classes': ('collapse',)
+        ('Initial Job Drop', {
+            'fields': ('instructions', 'attachment')
         }),
+        ('Job Completion Details', {
+            'fields': (
+                'topic', 
+                'word_count', 
+                'referencing_style', 
+                'writing_style',
+                'completion_instructions',
+                'expected_deadline',
+                'strict_deadline',
+                'amount',
+                'completed_form_at'
+            )
+        }),
+        ('Allocation', {
+            'fields': ('allocated_to', 'allocated_by', 'allocated_at')
+        }),
+        ('Timestamps', {
+            'fields': ('updated_at',)
+        })
     )
     
-    def has_attachment(self, obj):
-        return bool(obj.attachment)
-    has_attachment.boolean = True
-    has_attachment.short_description = 'Attachment'
+    def get_readonly_fields(self, request, obj=None):
+        # Make strict_deadline readonly since it's auto-calculated
+        readonly = list(super().get_readonly_fields(request, obj))
+        readonly.append('strict_deadline')
+        return readonly

@@ -14,7 +14,7 @@
 <div class="row">
     <div class="col-md-8">
         <div class="card">
-            <div class="card-header">
+            <div class="card-header bg-success text-white">
                 <i class="fas fa-file-alt"></i> Create New Job
             </div>
             <div class="card-body">
@@ -60,9 +60,14 @@
                         </small>
                     </div>
                     
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Next Step:</strong> After submitting, you'll be redirected to complete the job details form with deadline, amount, and other specifications.
+                    </div>
+                    
                     <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="fas fa-check me-2"></i>Submit Job
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-arrow-right me-2"></i>Next: Complete Job Details
                         </button>
                         <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
                             <i class="fas fa-times me-2"></i>Cancel
@@ -88,11 +93,21 @@
                             <small>{{ job.created_at|date:"M d, Y" }}</small>
                         </div>
                         <p class="mb-1 small text-muted">{{ job.instructions|truncatewords:10 }}</p>
-                        {% if job.attachment %}
-                        <small class="text-success">
-                            <i class="fas fa-paperclip me-1"></i>Has attachment
-                        </small>
-                        {% endif %}
+                        <div class="d-flex justify-content-between align-items-center">
+                            {% if job.attachment %}
+                            <small class="text-success">
+                                <i class="fas fa-paperclip me-1"></i>Has attachment
+                            </small>
+                            {% endif %}
+                            <span class="badge 
+                                {% if job.status == 'pending_completion' %}bg-warning
+                                {% elif job.status == 'pending_allocation' %}bg-info
+                                {% elif job.status == 'allocated' %}bg-primary
+                                {% elif job.status == 'completed' %}bg-success
+                                {% else %}bg-secondary{% endif %}">
+                                {{ job.get_status_display }}
+                            </span>
+                        </div>
                     </div>
                     {% endfor %}
                 </div>
@@ -114,7 +129,7 @@
                 <ul class="small mb-0">
                     <li>Use clear and unique Job IDs</li>
                     <li>Be specific in your instructions</li>
-                    <li>Include deadlines and requirements</li>
+                    <li>Complete both forms for job to be allocated</li>
                     <li>Attach reference materials if needed</li>
                 </ul>
             </div>
@@ -122,21 +137,24 @@
     </div>
 </div>
 
+<!-- All Jobs Summary -->
+{% if jobs %}
 <div class="row mt-4">
     <div class="col-12">
         <div class="card">
             <div class="card-header">
-                <i class="fas fa-list"></i> All Jobs Created by You
+                <i class="fas fa-list"></i> All Jobs Created by You ({{ jobs.count }})
             </div>
             <div class="card-body">
-                {% if jobs %}
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
                                 <th>Job ID</th>
-                                <th>Instructions Preview</th>
-                                <th>Attachment</th>
+                                <th>Topic</th>
+                                <th>Word Count</th>
+                                <th>Amount</th>
+                                <th>Status</th>
                                 <th>Created Date</th>
                                 <th>Actions</th>
                             </tr>
@@ -145,23 +163,42 @@
                             {% for job in jobs %}
                             <tr>
                                 <td><strong>{{ job.job_id }}</strong></td>
-                                <td>{{ job.instructions|truncatewords:15 }}</td>
+                                <td>{{ job.topic|default:"N/A"|truncatewords:5 }}</td>
+                                <td>{{ job.word_count|default:"N/A" }}</td>
                                 <td>
-                                    {% if job.attachment %}
-                                    <a href="{{ job.attachment.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-download"></i>
-                                    </a>
+                                    {% if job.amount %}
+                                    ₹{{ job.amount|floatformat:2 }}
                                     {% else %}
-                                    <span class="text-muted small">No file</span>
+                                    N/A
                                     {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if job.status == 'pending_completion' %}bg-warning
+                                        {% elif job.status == 'pending_allocation' %}bg-info
+                                        {% elif job.status == 'allocated' %}bg-primary
+                                        {% elif job.status == 'in_progress' %}bg-warning
+                                        {% elif job.status == 'completed' %}bg-success
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ job.get_status_display }}
+                                    </span>
                                 </td>
                                 <td>{{ job.created_at|date:"M d, Y H:i" }}</td>
                                 <td>
+                                    {% if job.status == 'pending_completion' and job.id %}
+                                    <a href="{% url 'job_completion' job.id %}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i> Complete
+                                    </a>
+                                    {% elif job.id %}
                                     <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewModal{{ job.id }}">
                                         <i class="fas fa-eye"></i> View
                                     </button>
+                                    {% else %}
+                                    <span class="text-muted small">Processing...</span>
+                                    {% endif %}
                                     
-                                    <!-- View Modal -->
+                                    <!-- View Modal (only if job.id exists) -->
+                                    {% if job.id %}
                                     <div class="modal fade" id="viewModal{{ job.id }}" tabindex="-1">
                                         <div class="modal-dialog modal-lg">
                                             <div class="modal-content">
@@ -170,18 +207,62 @@
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                 </div>
                                                 <div class="modal-body">
-                                                    <div class="mb-3">
-                                                        <strong>Job ID:</strong> {{ job.job_id }}
+                                                    <div class="row mb-3">
+                                                        <div class="col-md-6">
+                                                            <strong>Job ID:</strong> {{ job.job_id }}
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <strong>Status:</strong> 
+                                                            <span class="badge bg-primary">{{ job.get_status_display }}</span>
+                                                        </div>
                                                     </div>
+                                                    
+                                                    {% if job.topic %}
                                                     <div class="mb-3">
-                                                        <strong>Instructions:</strong>
+                                                        <strong>Topic:</strong>
+                                                        <p>{{ job.topic }}</p>
+                                                    </div>
+                                                    {% endif %}
+                                                    
+                                                    <div class="mb-3">
+                                                        <strong>Initial Instructions:</strong>
                                                         <pre class="border p-3 bg-light" style="white-space: pre-wrap;">{{ job.instructions }}</pre>
                                                     </div>
+                                                    
+                                                    {% if job.completion_instructions %}
                                                     <div class="mb-3">
-                                                        <strong>Created:</strong> {{ job.created_at|date:"F d, Y H:i" }}
+                                                        <strong>Completion Instructions:</strong>
+                                                        <pre class="border p-3 bg-light" style="white-space: pre-wrap;">{{ job.completion_instructions }}</pre>
                                                     </div>
+                                                    {% endif %}
+                                                    
+                                                    <div class="row">
+                                                        <div class="col-md-4">
+                                                            <strong>Word Count:</strong> {{ job.word_count|default:"N/A" }}
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <strong>Amount:</strong> ₹{{ job.amount|default:"0"|floatformat:2 }}
+                                                        </div>
+                                                        <div class="col-md-4">
+                                                            <strong>Created:</strong> {{ job.created_at|date:"M d, Y" }}
+                                                        </div>
+                                                    </div>
+                                                    
+                                                    {% if job.expected_deadline %}
+                                                    <div class="row mt-3">
+                                                        <div class="col-md-6">
+                                                            <strong>Expected Deadline:</strong> 
+                                                            {{ job.expected_deadline|date:"F d, Y H:i" }}
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <strong>Strict Deadline:</strong> 
+                                                            <span class="text-danger">{{ job.strict_deadline|date:"F d, Y H:i" }}</span>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                    
                                                     {% if job.attachment %}
-                                                    <div class="mb-3">
+                                                    <div class="mt-3">
                                                         <strong>Attachment:</strong>
                                                         <a href="{{ job.attachment.url }}" target="_blank" class="btn btn-sm btn-primary">
                                                             <i class="fas fa-download me-1"></i>Download
@@ -195,19 +276,16 @@
                                             </div>
                                         </div>
                                     </div>
+                                    {% endif %}
                                 </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
-                {% else %}
-                <div class="text-center text-muted py-4">
-                    <p>No jobs found. Create your first job above!</p>
-                </div>
-                {% endif %}
             </div>
         </div>
     </div>
 </div>
+{% endif %}
 {% endblock %}

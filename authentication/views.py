@@ -1,3 +1,7 @@
+# ==============================================
+# authentication/views.py (UPDATED)
+# ==============================================
+
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib import messages
@@ -12,30 +16,16 @@ def register_view(request):
         if form.is_valid():
             user = form.save(commit=False)
             
-            # Check if registering as superadmin
-            # Superadmins are auto-approved and active
-            if user.role == 'superadmin':
-                user.is_active = True
-                user.approval_status = 'approved'
-                user.is_staff = True
-                user.is_superuser = True
-                user.save()
-                
-                messages.success(
-                    request, 
-                    'Super Admin account created successfully! You can now login.'
-                )
-            else:
-                # Other users need admin approval
-                user.is_active = False
-                user.approval_status = 'pending'
-                user.save()
-                
-                messages.success(
-                    request, 
-                    'Registration request submitted successfully! Your account is pending admin approval. '
-                    'You will receive notification once your account is approved.'
-                )
+            # All users (including superadmin) need admin approval
+            user.is_active = False
+            user.approval_status = 'pending'
+            user.save()
+            
+            messages.success(
+                request, 
+                'Registration request submitted successfully! Your account is pending admin approval. '
+                'You will receive notification once your account is approved.'
+            )
             
             return redirect('login')
         else:
@@ -57,12 +47,14 @@ def login_view(request):
         user = authenticate(request, username=email, password=password)
         
         if user is not None:
-            # Superadmin can always login (auto-approved)
+            # Check if user is superadmin - they can login without approval
             if user.role == 'superadmin':
-                # Auto-approve superadmin if somehow not approved
-                if user.approval_status != 'approved':
+                # Auto-approve superadmin if not already approved
+                if not user.is_active or user.approval_status != 'approved':
                     user.approval_status = 'approved'
                     user.is_active = True
+                    user.is_staff = True
+                    user.is_superuser = True
                     user.save()
                 
                 login(request, user)
@@ -73,7 +65,7 @@ def login_view(request):
                     return redirect(next_url)
                 return redirect('dashboard')
             
-            # Check approval status for other users
+            # For other users, check approval status
             if user.approval_status == 'pending':
                 messages.warning(
                     request, 
@@ -85,7 +77,7 @@ def login_view(request):
                     'Your account registration was rejected. Please contact administrator for more information.'
                 )
             elif user.approval_status == 'approved' and user.is_active:
-                # Approved users can login (no re-approval needed)
+                # Approved users can login - no re-approval needed for existing users
                 login(request, user)
                 messages.success(request, f'Welcome back, {user.first_name}!')
                 

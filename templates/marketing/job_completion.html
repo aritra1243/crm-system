@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block title %}Job Completion Form{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            <strong>Job Drop Completed!</strong> Now complete the job details below to make it available for allocation.
+        </div>
+        <h2 class="mb-4">
+            <i class="fas fa-clipboard-check text-primary"></i> Job Completion Form
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-file-alt"></i> Complete Job Details - {{ job.job_id }}
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.topic.id_for_label }}" class="form-label">
+                            <i class="fas fa-heading me-1"></i>Topic <small class="text-muted">(Optional)</small>
+                        </label>
+                        {{ form.topic }}
+                        {% if form.topic.errors %}
+                            <div class="text-danger small">{{ form.topic.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.word_count.id_for_label }}" class="form-label">
+                            <i class="fas fa-sort-numeric-up me-1"></i>Word Count <span class="text-danger">*</span>
+                        </label>
+                        {{ form.word_count }}
+                        {% if form.word_count.errors %}
+                            <div class="text-danger small">{{ form.word_count.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Enter the required word count for this job</small>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.referencing_style.id_for_label }}" class="form-label">
+                                <i class="fas fa-book me-1"></i>Referencing Style <small class="text-muted">(Optional)</small>
+                            </label>
+                            {{ form.referencing_style }}
+                            {% if form.referencing_style.errors %}
+                                <div class="text-danger small">{{ form.referencing_style.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.writing_style.id_for_label }}" class="form-label">
+                                <i class="fas fa-pen-fancy me-1"></i>Writing Style <small class="text-muted">(Optional)</small>
+                            </label>
+                            {{ form.writing_style }}
+                            {% if form.writing_style.errors %}
+                                <div class="text-danger small">{{ form.writing_style.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.completion_instructions.id_for_label }}" class="form-label">
+                            <i class="fas fa-align-left me-1"></i>Instructions <span class="text-danger">*</span>
+                        </label>
+                        {{ form.completion_instructions }}
+                        {% if form.completion_instructions.errors %}
+                            <div class="text-danger small">{{ form.completion_instructions.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            Provide detailed instructions for completing this job
+                        </small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.expected_deadline.id_for_label }}" class="form-label">
+                            <i class="fas fa-calendar-alt me-1"></i>Expected Deadline <span class="text-danger">*</span>
+                        </label>
+                        {{ form.expected_deadline }}
+                        {% if form.expected_deadline.errors %}
+                            <div class="text-danger small">{{ form.expected_deadline.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">
+                            Select expected completion date and time (IST)
+                        </small>
+                    </div>
+                    
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Note:</strong> Strict Deadline will be automatically set to 24 hours after the Expected Deadline
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.amount.id_for_label }}" class="form-label">
+                            <i class="fas fa-rupee-sign me-1"></i>Amount <span class="text-danger">*</span>
+                        </label>
+                        <div class="input-group">
+                            <span class="input-group-text">₹</span>
+                            {{ form.amount }}
+                        </div>
+                        {% if form.amount.errors %}
+                            <div class="text-danger small">{{ form.amount.errors }}</div>
+                        {% endif %}
+                        <small class="form-text text-muted">Enter the job amount in INR</small>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-check me-2"></i>Submit Job for Allocation
+                        </button>
+                        <a href="{% url 'job_drop' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Job Drop
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card bg-light">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i> Job Summary
+            </div>
+            <div class="card-body">
+                <h6><i class="fas fa-hashtag me-2"></i>Job ID</h6>
+                <p class="mb-3"><strong>{{ job.job_id }}</strong></p>
+                
+                <h6><i class="fas fa-calendar me-2"></i>Created On</h6>
+                <p class="mb-3">{{ job.created_at|date:"F d, Y H:i" }}</p>
+                
+                <h6><i class="fas fa-align-left me-2"></i>Initial Instructions</h6>
+                <p class="small mb-3">{{ job.instructions|truncatewords:30 }}</p>
+                
+                {% if job.attachment %}
+                <h6><i class="fas fa-paperclip me-2"></i>Attachment</h6>
+                <p class="mb-3">
+                    <a href="{{ job.attachment.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-download me-1"></i>View File
+                    </a>
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header bg-info text-white">
+                <i class="fas fa-lightbulb"></i> Important Notes
+            </div>
+            <div class="card-body">
+                <ul class="small mb-0">
+                    <li>All fields marked with <span class="text-danger">*</span> are mandatory</li>
+                    <li>Expected deadline must be at least 1 hour from now</li>
+                    <li>Strict deadline is auto-set to +24 hours</li>
+                    <li>Job will be available for allocators after submission</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

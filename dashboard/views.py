@@ -1,12 +1,9 @@
-# ==============================================
-# dashboard/views.py (UPDATED)
-# ==============================================
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from authentication.models import CustomUser
+from marketing.models import Job
 
 @login_required
 def dashboard_view(request):
@@ -49,6 +46,47 @@ def dashboard_view(request):
         context['rejected_users'] = CustomUser.objects.filter(
             approval_status='rejected'
         ).order_by('-date_joined')
+    
+    # Add additional context for allocator
+    if role == 'allocator':
+        # Get all jobs pending allocation
+        context['pending_jobs'] = Job.objects.filter(
+            status='pending_allocation'
+        ).order_by('-completed_form_at')
+        
+        # Get allocated jobs
+        context['allocated_jobs'] = Job.objects.filter(
+            status__in=['allocated', 'in_progress']
+        ).order_by('-allocated_at')
+        
+        # Get completed jobs
+        context['completed_jobs'] = Job.objects.filter(
+            status='completed'
+        ).order_by('-updated_at')[:10]
+        
+        # Get available writers
+        context['writers'] = CustomUser.objects.filter(
+            role='writer',
+            is_active=True,
+            approval_status='approved'
+        )
+        
+        # Statistics
+        context['stats'] = {
+            'pending_count': Job.objects.filter(status='pending_allocation').count(),
+            'allocated_today': Job.objects.filter(
+                allocated_at__date=timezone.now().date()
+            ).count(),
+            'active_writers': CustomUser.objects.filter(
+                role='writer',
+                is_active=True,
+                approval_status='approved'
+            ).count(),
+            'overdue_count': Job.objects.filter(
+                status__in=['allocated', 'in_progress'],
+                strict_deadline__lt=timezone.now()
+            ).count(),
+        }
     
     return render(request, template, context)
 
