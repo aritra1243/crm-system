@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Writer Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-pen text-success"></i> Writer Dashboard
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-file-alt fa-2x mb-2"></i>
+                <h3>5</h3>
+                <p class="mb-0">Assigned Jobs</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <h3>3</h3>
+                <p class="mb-0">In Progress</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-check-circle fa-2x mb-2"></i>
+                <h3>28</h3>
+                <p class="mb-0">Completed</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-star fa-2x mb-2"></i>
+                <h3>4.8</h3>
+                <p class="mb-0">Rating</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-tasks"></i> My Assignments
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Job ID</th>
+                                <th>Title</th>
+                                <th>Deadline</th>
+                                <th>Priority</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>#JOB001</td>
+                                <td>Content Writing Task</td>
+                                <td>2024-11-05</td>
+                                <td><span class="badge bg-danger">High</span></td>
+                                <td><span class="badge bg-warning">In Progress</span></td>
+                                <td><button class="btn btn-sm btn-primary">View</button></td>
+                            </tr>
+                            <tr>
+                                <td>#JOB002</td>
+                                <td>Blog Post Creation</td>
+                                <td>2024-11-06</td>
+                                <td><span class="badge bg-warning">Medium</span></td>
+                                <td><span class="badge bg-info">Assigned</span></td>
+                                <td><button class="btn btn-sm btn-primary">Start</button></td>
+                            </tr>
+                            <tr>
+                                <td>#JOB003</td>
+                                <td>Article Writing</td>
+                                <td>2024-11-07</td>
+                                <td><span class="badge bg-success">Low</span></td>
+                                <td><span class="badge bg-info">Assigned</span></td>
+                                <td><button class="btn btn-sm btn-primary">Start</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-bar"></i> Performance
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>On-time Delivery</span>
+                        <span>92%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" style="width: 92%"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Quality Score</span>
+                        <span>88%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-info" style="width: 88%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-trophy"></i> Achievements
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2"><i class="fas fa-medal text-warning me-2"></i>Top Writer - October 2024</li>
+                    <li class="mb-2"><i class="fas fa-award text-success me-2"></i>100 Jobs Completed</li>
+                    <li class="mb-2"><i class="fas fa-star text-info me-2"></i>5-Star Rating Achievement</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

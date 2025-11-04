@@ -1,0 +1,174 @@
+{% extends 'base.html' %}
+
+{% block title %}Manager Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-user-tie text-primary"></i> Manager Dashboard
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-users fa-2x mb-2"></i>
+                <h3>12</h3>
+                <p class="mb-0">Team Members</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-tasks fa-2x mb-2"></i>
+                <h3>48</h3>
+                <p class="mb-0">Active Projects</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-clock fa-2x mb-2"></i>
+                <h3>85%</h3>
+                <p class="mb-0">On-Time Delivery</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-dollar-sign fa-2x mb-2"></i>
+                <h3>$45K</h3>
+                <p class="mb-0">Monthly Revenue</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-chart-line"></i> Team Performance
+            </div>
+            <div class="card-body">
+                <p>Overall team performance metrics and KPIs.</p>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Team Productivity</span>
+                        <span>92%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-success" style="width: 92%"></div>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Quality Score</span>
+                        <span>88%</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar bg-info" style="width: 88%"></div>
+                    </div>
+                </div>
+                <button class="btn btn-primary btn-sm mt-2">View Detailed Report</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-clipboard-check"></i> Project Status
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Project</th>
+                                <th>Status</th>
+                                <th>Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Project Alpha</td>
+                                <td><span class="badge bg-success">Active</span></td>
+                                <td>75%</td>
+                            </tr>
+                            <tr>
+                                <td>Project Beta</td>
+                                <td><span class="badge bg-warning">Review</span></td>
+                                <td>60%</td>
+                            </tr>
+                            <tr>
+                                <td>Project Gamma</td>
+                                <td><span class="badge bg-info">Planning</span></td>
+                                <td>30%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <button class="btn btn-success btn-sm mt-2">View All Projects</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-users-cog"></i> Team Overview
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Role</th>
+                                <th>Tasks</th>
+                                <th>Completed</th>
+                                <th>Performance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>John Writer</td>
+                                <td>Writer</td>
+                                <td>5</td>
+                                <td>3</td>
+                                <td><span class="badge bg-success">Excellent</span></td>
+                            </tr>
+                            <tr>
+                                <td>Jane Marketing</td>
+                                <td>Marketing</td>
+                                <td>8</td>
+                                <td>6</td>
+                                <td><span class="badge bg-success">Excellent</span></td>
+                            </tr>
+                            <tr>
+                                <td>Mike Allocator</td>
+                                <td>Allocator</td>
+                                <td>10</td>
+                                <td>7</td>
+                                <td><span class="badge bg-warning">Good</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
