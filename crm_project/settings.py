@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'authentication',
     'dashboard',
     'marketing',
+    'writer',
 ]
 
 MIDDLEWARE = [

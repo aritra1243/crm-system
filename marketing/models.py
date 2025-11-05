@@ -1,5 +1,3 @@
-
-
 from django.db import models
 from django.utils import timezone
 from datetime import timedelta
@@ -7,6 +5,7 @@ from authentication.models import CustomUser
 
 class Job(models.Model):
     REFERENCING_CHOICES = [
+        ('', 'Select Referencing Style'),
         ('apa', 'APA'),
         ('mla', 'MLA'),
         ('harvard', 'Harvard'),
@@ -16,6 +15,7 @@ class Job(models.Model):
     ]
     
     WRITING_STYLE_CHOICES = [
+        ('', 'Select Writing Style'),
         ('academic', 'Academic'),
         ('professional', 'Professional'),
         ('creative', 'Creative'),
@@ -37,7 +37,7 @@ class Job(models.Model):
     # Job Drop fields
     job_id = models.CharField(max_length=100, unique=True)
     instructions = models.TextField()
-    attachment = models.FileField(upload_to='media/job_attachments/', null=True, blank=True)
+    attachment = models.FileField(upload_to='job_attachments/', null=True, blank=True)
     created_by = models.ForeignKey(
         CustomUser, 
         on_delete=models.CASCADE, 
@@ -95,6 +95,7 @@ class Job(models.Model):
     class Meta:
         ordering = ['-created_at']
         db_table = 'marketing_job'
+        # REMOVED indexes - Djongo doesn't support them well
     
     def __str__(self):
         return f"{self.job_id} - {self.status}"

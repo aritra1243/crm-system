@@ -3,6 +3,27 @@
 {% block title %}Writer Dashboard{% endblock %}
 
 {% block content %}
+<style>
+    .blurred {
+        filter: blur(3px);
+        pointer-events: none;
+        user-select: none;
+        position: relative;
+    }
+    .blurred::after {
+        content: "Complete current job to unlock";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0,0,0,0.6);
+        color: #fff;
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+    }
+</style>
+
 <div class="row">
     <div class="col-12">
         <h2 class="mb-4">
@@ -16,137 +37,156 @@
         <div class="card bg-primary text-white">
             <div class="card-body text-center">
                 <i class="fas fa-file-alt fa-2x mb-2"></i>
-                <h3>5</h3>
+                <h3>{{ stats.assigned_count }}</h3>
                 <p class="mb-0">Assigned Jobs</p>
             </div>
         </div>
     </div>
-    
     <div class="col-md-3">
         <div class="card bg-warning text-white">
             <div class="card-body text-center">
                 <i class="fas fa-clock fa-2x mb-2"></i>
-                <h3>3</h3>
+                <h3>{{ stats.in_progress }}</h3>
                 <p class="mb-0">In Progress</p>
             </div>
         </div>
     </div>
-    
     <div class="col-md-3">
         <div class="card bg-success text-white">
             <div class="card-body text-center">
                 <i class="fas fa-check-circle fa-2x mb-2"></i>
-                <h3>28</h3>
+                <h3>{{ stats.completed }}</h3>
                 <p class="mb-0">Completed</p>
             </div>
         </div>
     </div>
-    
     <div class="col-md-3">
         <div class="card bg-info text-white">
             <div class="card-body text-center">
                 <i class="fas fa-star fa-2x mb-2"></i>
-                <h3>4.8</h3>
+                <h3>{{ stats.rating }}</h3>
                 <p class="mb-0">Rating</p>
             </div>
         </div>
     </div>
 </div>
 
+{% if visible_job %}
 <div class="row mt-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <i class="fas fa-tasks"></i> My Assignments
+        <div class="card border-success">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-unlock"></i> Current Job
             </div>
             <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>Job ID</th>
-                                <th>Title</th>
-                                <th>Deadline</th>
-                                <th>Priority</th>
-                                <th>Status</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>#JOB001</td>
-                                <td>Content Writing Task</td>
-                                <td>2024-11-05</td>
-                                <td><span class="badge bg-danger">High</span></td>
-                                <td><span class="badge bg-warning">In Progress</span></td>
-                                <td><button class="btn btn-sm btn-primary">View</button></td>
-                            </tr>
-                            <tr>
-                                <td>#JOB002</td>
-                                <td>Blog Post Creation</td>
-                                <td>2024-11-06</td>
-                                <td><span class="badge bg-warning">Medium</span></td>
-                                <td><span class="badge bg-info">Assigned</span></td>
-                                <td><button class="btn btn-sm btn-primary">Start</button></td>
-                            </tr>
-                            <tr>
-                                <td>#JOB003</td>
-                                <td>Article Writing</td>
-                                <td>2024-11-07</td>
-                                <td><span class="badge bg-success">Low</span></td>
-                                <td><span class="badge bg-info">Assigned</span></td>
-                                <td><button class="btn btn-sm btn-primary">Start</button></td>
-                            </tr>
-                        </tbody>
-                    </table>
+                <div class="row mb-3">
+                    <div class="col-md-4">
+                        <strong>Job ID:</strong> {{ visible_job.job_id }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Deadline:</strong> {{ visible_job.expected_deadline|date:"M d, Y H:i" }}
+                    </div>
+                    <div class="col-md-4">
+                        <strong>Status:</strong>
+                        <span class="badge {% if visible_job.status == 'allocated' %}bg-info{% elif visible_job.status == 'in_progress' %}bg-warning{% elif visible_job.status == 'submitted' %}bg-success{% else %}bg-secondary{% endif %}">
+                            {{ visible_job.get_status_display }}
+                        </span>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="row mt-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <i class="fas fa-chart-bar"></i> Performance
-            </div>
-            <div class="card-body">
+                {% if visible_job.topic %}
                 <div class="mb-3">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span>On-time Delivery</span>
-                        <span>92%</span>
+                    <strong>Title / Topic:</strong>
+                    <div class="border p-2 bg-light">{{ visible_job.topic }}</div>
+                </div>
+                {% endif %}
+
+                <div class="row mb-3">
+                    <div class="col-md-3">
+                        <strong>Word Count:</strong> {{ visible_job.word_count|default:"N/A" }}
                     </div>
-                    <div class="progress">
-                        <div class="progress-bar bg-success" style="width: 92%"></div>
+                    <div class="col-md-3">
+                        <strong>Referencing:</strong> {{ visible_job.get_referencing_style_display|default:"N/A" }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Writing Style:</strong> {{ visible_job.get_writing_style_display|default:"N/A" }}
+                    </div>
+                    <div class="col-md-3">
+                        <strong>Amount:</strong> ₹{{ visible_job.amount|default:"0"|floatformat:2 }}
                     </div>
                 </div>
+
                 <div class="mb-3">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span>Quality Score</span>
-                        <span>88%</span>
-                    </div>
-                    <div class="progress">
-                        <div class="progress-bar bg-info" style="width: 88%"></div>
-                    </div>
+                    <strong>Initial Instructions:</strong>
+                    <pre class="border p-3 bg-light" style="white-space: pre-wrap;">{{ visible_job.instructions }}</pre>
                 </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header">
-                <i class="fas fa-trophy"></i> Achievements
-            </div>
-            <div class="card-body">
-                <ul class="list-unstyled">
-                    <li class="mb-2"><i class="fas fa-medal text-warning me-2"></i>Top Writer - October 2024</li>
-                    <li class="mb-2"><i class="fas fa-award text-success me-2"></i>100 Jobs Completed</li>
-                    <li class="mb-2"><i class="fas fa-star text-info me-2"></i>5-Star Rating Achievement</li>
-                </ul>
+
+                {% if visible_job.completion_instructions %}
+                <div class="mb-3">
+                    <strong>Completion Instructions:</strong>
+                    <pre class="border p-3 bg-light" style="white-space: pre-wrap;">{{ visible_job.completion_instructions }}</pre>
+                </div>
+                {% endif %}
+
+                <div class="d-flex flex-wrap gap-2">
+                    {% if visible_job.status == 'allocated' %}
+                    <a href="{% url 'writer_start' visible_job.job_id %}" class="btn btn-primary">
+                        <i class="fas fa-play"></i> Start Job
+                    </a>
+                    {% endif %}
+
+                    {% if visible_job.status in 'allocated,in_progress' or visible_job.status == 'in_progress' %}
+                    <a href="{% url 'writer_upload_structure' visible_job.job_id %}" class="btn btn-warning">
+                        <i class="fas fa-sitemap"></i> Upload Structure
+                    </a>
+                    <a href="{% url 'writer_upload_final' visible_job.job_id %}" class="btn btn-success">
+                        <i class="fas fa-upload"></i> Upload Final + Summary
+                    </a>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </div>
 </div>
+{% else %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> No active job to work on. If you have multiple assigned jobs, you may have already submitted the current one. Wait for the next to unlock.
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if blurred_jobs %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-secondary">
+            <div class="card-header">
+                <i class="fas fa-lock"></i> Upcoming Jobs (blurred until you submit the current job)
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    {% for job in blurred_jobs %}
+                    <div class="col-md-4">
+                        <div class="card blurred">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ job.job_id }}</h5>
+                                <p class="card-text">{{ job.topic|default:"No topic"|truncatewords:10 }}</p>
+                                <p class="mb-1"><strong>Deadline:</strong> {{ job.expected_deadline|date:"M d, Y H:i" }}</p>
+                                <span class="badge {% if job.status == 'allocated' %}bg-info{% elif job.status == 'in_progress' %}bg-warning{% elif job.status == 'submitted' %}bg-success{% else %}bg-secondary{% endif %}">
+                                    {{ job.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-muted">No more jobs.</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 {% endblock %}

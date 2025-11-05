@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Upload Final Files{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-md-10">
+    <div class="card">
+      <div class="card-header bg-success text-white">
+        <i class="fas fa-upload"></i> Upload Final + Summary for {{ job.job_id }}
+      </div>
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <div class="alert alert-info">
+            After uploading your final copy and saving the summary, this job will be marked as <strong>Submitted</strong>.
+          </div>
+          <button type="submit" class="btn btn-success"><i class="fas fa-check-circle"></i> Submit</button>
+          <a href="{% url 'writer_dashboard' %}" class="btn btn-secondary">Back</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from datetime import timedelta  # <-- added
 from authentication.models import CustomUser
 from marketing.models import Job
 
@@ -72,10 +73,16 @@ def dashboard_view(request):
         )
         
         # Statistics
+        now = timezone.now()
+        start_of_today = timezone.localtime(now).replace(hour=0, minute=0, second=0, microsecond=0)
+        end_of_today = start_of_today + timedelta(days=1)
+
         context['stats'] = {
             'pending_count': Job.objects.filter(status='pending_allocation').count(),
+            # replaced __date with a safe datetime range
             'allocated_today': Job.objects.filter(
-                allocated_at__date=timezone.now().date()
+                allocated_at__gte=start_of_today,
+                allocated_at__lt=end_of_today
             ).count(),
             'active_writers': CustomUser.objects.filter(
                 role='writer',

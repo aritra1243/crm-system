@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Start Job{% endblock %}
+{% block content %}
+<div class="row">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <i class="fas fa-play"></i> Start Job {{ job.job_id }}
+      </div>
+      <div class="card-body">
+        <p>Starting will mark this job as <strong>In Progress</strong> for you.</p>
+        <form method="post">
+          {% csrf_token %}
+          {{ form.as_p }}
+          <button type="submit" class="btn btn-primary"><i class="fas fa-check"></i> Confirm Start</button>
+          <a href="{% url 'writer_dashboard' %}" class="btn btn-secondary">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,11 +1,8 @@
-# ==============================================
-# marketing/forms.py
-# ==============================================
-
 from django import forms
 from .models import Job
 from django.utils import timezone
 from datetime import timedelta
+from django.core.exceptions import ValidationError
 
 class JobDropForm(forms.ModelForm):
     class Meta:
@@ -26,11 +23,8 @@ class JobDropForm(forms.ModelForm):
             })
         }
     
-    def clean_job_id(self):
-        job_id = self.cleaned_data.get('job_id')
-        if Job.objects.filter(job_id=job_id).exists():
-            raise forms.ValidationError('This Job ID already exists. Please use a unique ID.')
-        return job_id
+    # REMOVED clean_job_id method - let MongoDB handle uniqueness
+    # If duplicate job_id, MongoDB will raise error which Django will catch
 
 
 class JobCompletionForm(forms.ModelForm):
@@ -94,27 +88,25 @@ class JobCompletionForm(forms.ModelForm):
     def clean_expected_deadline(self):
         expected_deadline = self.cleaned_data.get('expected_deadline')
         
-        # Ensure deadline is in the future
         if expected_deadline:
             now = timezone.now()
             if expected_deadline <= now:
-                raise forms.ValidationError('Expected deadline must be in the future.')
+                raise ValidationError('Expected deadline must be in the future.')
             
-            # Ensure deadline is at least 1 hour from now
             min_deadline = now + timedelta(hours=1)
             if expected_deadline < min_deadline:
-                raise forms.ValidationError('Expected deadline must be at least 1 hour from now.')
+                raise ValidationError('Expected deadline must be at least 1 hour from now.')
         
         return expected_deadline
     
     def clean_word_count(self):
         word_count = self.cleaned_data.get('word_count')
         if word_count is not None and word_count <= 0:
-            raise forms.ValidationError('Word count must be greater than 0.')
+            raise ValidationError('Word count must be greater than 0.')
         return word_count
     
     def clean_amount(self):
         amount = self.cleaned_data.get('amount')
         if amount is not None and amount <= 0:
-            raise forms.ValidationError('Amount must be greater than 0.')
+            raise ValidationError('Amount must be greater than 0.')
         return amount
