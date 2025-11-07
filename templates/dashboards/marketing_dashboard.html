@@ -4,85 +4,77 @@
 
 {% block content %}
 <div class="row">
-    <div class="col-12">
-        <h2 class="mb-4">
-            <i class="fas fa-bullhorn text-success"></i> Marketing Dashboard
-        </h2>
-    </div>
+  <div class="col-12">
+    <h2 class="mb-4">
+      <i class="fas fa-bullhorn text-success"></i> Marketing Dashboard
+    </h2>
+  </div>
 </div>
 
 <div class="row">
-    <div class="col-md-3">
-        <div class="card bg-primary text-white">
-            <div class="card-body text-center">
-                <i class="fas fa-briefcase fa-2x mb-2"></i>
-                <h3>24</h3>
-                <p class="mb-0">Total Jobs</p>
-            </div>
-        </div>
+  <div class="col-md-3">
+    <div class="card bg-primary text-white">
+      <div class="card-body text-center">
+        <i class="fas fa-briefcase fa-2x mb-2"></i>
+        <h3>{{ stats.total }}</h3>
+        <p class="mb-0">Total Jobs</p>
+      </div>
     </div>
-    
-    <div class="col-md-3">
-        <div class="card bg-success text-white">
-            <div class="card-body text-center">
-                <i class="fas fa-check-circle fa-2x mb-2"></i>
-                <h3>18</h3>
-                <p class="mb-0">Completed</p>
-            </div>
-        </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card bg-success text-white">
+      <div class="card-body text-center">
+        <i class="fas fa-check-circle fa-2x mb-2"></i>
+        <h3>{{ stats.completed }}</h3>
+        <p class="mb-0">Completed</p>
+      </div>
     </div>
-    
-    <div class="col-md-3">
-        <div class="card bg-warning text-white">
-            <div class="card-body text-center">
-                <i class="fas fa-clock fa-2x mb-2"></i>
-                <h3>6</h3>
-                <p class="mb-0">Pending</p>
-            </div>
-        </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card bg-warning text-white">
+      <div class="card-body text-center">
+        <i class="fas fa-clock fa-2x mb-2"></i>
+        <h3>{{ stats.pending }}</h3>
+        <p class="mb-0">Pending</p>
+      </div>
     </div>
-    
-    <div class="col-md-3">
-        <div class="card bg-info text-white">
-            <div class="card-body text-center">
-                <i class="fas fa-chart-line fa-2x mb-2"></i>
-                <h3>95%</h3>
-                <p class="mb-0">Success Rate</p>
-            </div>
-        </div>
+  </div>
+
+  <div class="col-md-3">
+    <div class="card bg-info text-white">
+      <div class="card-body text-center">
+        <i class="fas fa-chart-line fa-2x mb-2"></i>
+        <h3>{{ stats.success_rate }}%</h3>
+        <p class="mb-0">Success Rate</p>
+      </div>
     </div>
+  </div>
 </div>
 
 <div class="row mt-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <span><i class="fas fa-tasks"></i> Marketing Actions</span>
-                <a href="{% url 'job_drop' %}" class="btn btn-sm btn-light">
-                    <i class="fas fa-plus"></i> New Job Drop
-                </a>
-            </div>
-            <div class="card-body">
-                <div class="list-group">
-                    <a href="{% url 'job_drop' %}" class="list-group-item list-group-item-action">
-                        <i class="fas fa-plus-circle text-primary me-2"></i>
-                        Create New Job Drop
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action">
-                        <i class="fas fa-list text-success me-2"></i>
-                        View All Jobs
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action">
-                        <i class="fas fa-chart-bar text-info me-2"></i>
-                        Campaign Analytics
-                    </a>
-                    <a href="#" class="list-group-item list-group-item-action">
-                        <i class="fas fa-users text-warning me-2"></i>
-                        Team Performance
-                    </a>
-                </div>
-            </div>
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fas fa-tasks"></i> Marketing Actions</span>
+        <a href="{% url 'job_drop' %}" class="btn btn-sm btn-light">
+          <i class="fas fa-plus"></i> New Job Drop
+        </a>
+      </div>
+      <div class="card-body">
+        <div class="list-group">
+          <a href="{% url 'job_drop' %}" class="list-group-item list-group-item-action">
+            <i class="fas fa-plus-circle text-primary me-2"></i>
+            Create New Job Drop
+          </a>
+          <a href="{% url 'job_list' %}" class="list-group-item list-group-item-action">
+            <i class="fas fa-list text-success me-2"></i>
+            View All Jobs
+          </a>
         </div>
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}

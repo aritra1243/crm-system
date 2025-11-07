@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% block title %}All Jobs{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <h2 class="mb-3">
+      <i class="fas fa-list text-primary"></i> All Jobs Created by You
+    </h2>
+  </div>
+</div>
+
+<div class="row mb-3">
+  <div class="col-md-3">
+    <div class="card bg-primary text-white">
+      <div class="card-body text-center">
+        <i class="fas fa-briefcase fa-2x mb-2"></i>
+        <h4 class="mb-0">{{ stats.total }}</h4>
+        <small>Total</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-success text-white">
+      <div class="card-body text-center">
+        <i class="fas fa-check-circle fa-2x mb-2"></i>
+        <h4 class="mb-0">{{ stats.completed }}</h4>
+        <small>Completed</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-warning text-white">
+      <div class="card-body text-center">
+        <i class="fas fa-clock fa-2x mb-2"></i>
+        <h4 class="mb-0">{{ stats.pending }}</h4>
+        <small>Pending</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-info text-white">
+      <div class="card-body text-center">
+        <i class="fas fa-chart-line fa-2x mb-2"></i>
+        <h4 class="mb-0">{{ stats.success_rate }}%</h4>
+        <small>Success Rate</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <i class="fas fa-table"></i> All Jobs (deduped by Job ID)
+  </div>
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead>
+          <tr>
+            <th>Job ID</th>
+            <th>Topic</th>
+            <th>Word Count</th>
+            <th>Amount</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for j in jobs %}
+          <tr>
+            <td><strong>{{ j.job_id }}</strong></td>
+            <td>{{ j.topic|default:"N/A"|truncatewords:6 }}</td>
+            <td>{{ j.word_count|default:"N/A" }}</td>
+            <td>
+              {% if j.amount %}₹{{ j.amount|floatformat:2 }}{% else %}N/A{% endif %}
+            </td>
+            <td>
+              <span class="badge
+                {% if j.status == 'pending_completion' %}bg-warning
+                {% elif j.status == 'pending_allocation' %}bg-info
+                {% elif j.status == 'allocated' %}bg-primary
+                {% elif j.status == 'in_progress' %}bg-warning
+                {% elif j.status == 'submitted' %}bg-secondary
+                {% elif j.status == 'completed' %}bg-success
+                {% else %}bg-secondary{% endif %}">
+                {{ j.get_status_display }}
+              </span>
+            </td>
+            <td>{{ j.created_at|date:"M d, Y H:i" }}</td>
+            <td>
+              {% if j.status == 'pending_completion' %}
+                <a href="{% url 'job_completion' j.job_id %}" class="btn btn-sm btn-warning">
+                  <i class="fas fa-edit"></i> Complete
+                </a>
+              {% endif %}
+
+              {% if j.status in 'pending_completion,pending_allocation,draft' or j.status == 'pending_allocation' or j.status == 'draft' %}
+                {% if j.id %}
+                <a href="{% url 'job_edit' j.id %}" class="btn btn-sm btn-primary">
+                  <i class="fas fa-pen"></i> Edit
+                </a>
+                {% endif %}
+              {% endif %}
+
+              {% with modal_key=j.id|default:j.job_id %}
+              <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#viewModal{{ modal_key }}">
+                <i class="fas fa-eye"></i> View
+              </button>
+              <div class="modal fade" id="viewModal{{ modal_key }}" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title">Job Details: {{ j.job_id }}</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                      {% if j.topic %}
+                      <p><strong>Topic:</strong> {{ j.topic }}</p>
+                      {% endif %}
+                      <p><strong>Word Count:</strong> {{ j.word_count|default:"N/A" }}</p>
+                      <p><strong>Amount:</strong> {% if j.amount %}₹{{ j.amount|floatformat:2 }}{% else %}N/A{% endif %}</p>
+                      <p><strong>Status:</strong> {{ j.get_status_display }}</p>
+                      <p><strong>Expected Deadline:</strong> {{ j.expected_deadline|date:"F d, Y H:i" }}</p>
+                      <p><strong>Strict Deadline:</strong> <span class="text-danger">{{ j.strict_deadline|date:"F d, Y H:i" }}</span></p>
+                      <hr>
+                      <p class="mb-1"><strong>Initial Instructions:</strong></p>
+                      <pre class="border p-3 bg-light" style="white-space: pre-wrap;">{{ j.instructions }}</pre>
+                      {% if j.completion_instructions %}
+                      <p class="mb-1"><strong>Completion Instructions:</strong></p>
+                      <pre class="border p-3 bg-light" style="white-space: pre-wrap;">{{ j.completion_instructions }}</pre>
+                      {% endif %}
+                      {% if j.attachment %}
+                      <a href="{{ j.attachment.url }}" target="_blank" class="btn btn-sm btn-primary mt-2">
+                        <i class="fas fa-download me-1"></i> Download Attachment
+                      </a>
+                      {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endwith %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="7" class="text-center text-muted">No jobs found</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
