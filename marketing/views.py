@@ -7,6 +7,7 @@ from django.http import Http404
 
 from .models import Job
 from .forms import JobDropForm, JobCompletionForm
+from authentication.models import CustomUser
 
 
 def _dedupe_jobs(qs):
@@ -29,6 +30,40 @@ def _dedupe_jobs(qs):
     def _key(obj):
         return getattr(obj, "created_at", timezone.now())
     return sorted(latest_by_id.values(), key=_key, reverse=True)
+
+def _compute_stats(jobs):
+    """
+    Build dashboard counters from a deduped jobs list.
+    """
+    total = len(jobs)
+    completed = sum(1 for j in jobs if j.status == "completed")
+    pending = total - completed
+    success_rate = round((completed / total) * 100) if total else 0
+    return {
+        "total": total,
+        "completed": completed,
+        "pending": pending,
+        "success_rate": success_rate,
+    }
+
+
+@login_required
+def marketing_dashboard(request):
+    """
+    Marketing dashboard with dynamic counters.
+    """
+    if request.user.role != 'marketing':
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('dashboard')
+
+    try:
+        base_qs = Job.objects.filter(created_by=request.user).order_by('-created_at')
+        jobs = _dedupe_jobs(base_qs)
+    except Exception:
+        jobs = []
+
+    stats = _compute_stats(jobs)
+    return render(request, 'marketing/marketing_dashboard.html', {"stats": stats})
 
 
 @login_required
@@ -213,5 +248,42 @@ def job_list_view(request):
         jobs = []
         messages.warning(request, 'Unable to load jobs at this time.')
 
-    context = {'jobs': jobs}
+    # NEW: build stats for the header cards
+    stats = _compute_stats(jobs)
+
+    # NEW: pass stats to the template
+    context = {'jobs': jobs, 'stats': stats}
     return render(request, 'marketing/job_list.html', context)
+
+@login_required
+def allocator_dashboard(request):
+    if request.user.role not in ("allocator", "admin", "manager"):
+        messages.error(request, "You do not have permission to view this page.")
+        return redirect("dashboard")
+
+    pending_jobs = Job.objects.filter(status="pending_allocation").order_by("-created_at")
+    allocated_jobs = Job.objects.filter(status__in=["allocated", "in_progress"]).order_by("-allocated_at")
+
+    writers = CustomUser.objects.filter(role="writer", is_active=True).order_by("first_name", "last_name")
+    process_users = CustomUser.objects.filter(role="process", is_active=True).order_by("first_name", "last_name")
+
+    stats = {
+        "pending_count": pending_jobs.count(),
+        "allocated_today": Job.objects.filter(
+            status__in=["allocated", "in_progress"],
+            allocated_at__date=timezone.now().date()
+        ).count(),
+        "active_writers": writers.count(),
+        "overdue_count": Job.objects.filter(
+            status__in=["allocated", "in_progress"],
+            expected_deadline__lt=timezone.now()
+        ).count(),
+    }
+
+    return render(request, "dashboard/allocator_dashboard.html", {
+        "pending_jobs": pending_jobs,
+        "allocated_jobs": allocated_jobs,
+        "writers": writers,
+        "process_users": process_users,
+        "stats": stats,
+    })

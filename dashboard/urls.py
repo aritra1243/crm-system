@@ -7,4 +7,5 @@ urlpatterns = [
     path('approve-user/<int:user_id>/', views.approve_user, name='approve_user'),
     path('reject-user/<int:user_id>/', views.reject_user, name='reject_user'),
     path('delete-user/<int:user_id>/', views.delete_user, name='delete_user'),
+    path( "allocator/allocate/<slug:job_code>/", views.allocate_job_by_code,name="allocate_job",),
 ]
