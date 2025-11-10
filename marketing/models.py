@@ -2,6 +2,8 @@ from django.db import models
 from django.utils import timezone
 from datetime import timedelta
 from authentication.models import CustomUser
+from django.conf import settings
+
 
 class Job(models.Model):
     REFERENCING_CHOICES = [
@@ -91,6 +93,39 @@ class Job(models.Model):
     allocated_at = models.DateTimeField(null=True, blank=True)
     
     updated_at = models.DateTimeField(auto_now=True)
+
+    
+    job_id = models.CharField(max_length=64)  # your code/id string
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='created_jobs')
+    # Writer assignment
+    allocated_to = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='writer_jobs'
+    )
+    allocated_at = models.DateTimeField(null=True, blank=True)
+
+    # Process assignment (separate lane)
+    process_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True,
+        on_delete=models.SET_NULL, related_name='process_jobs'
+    )
+    process_assigned_at = models.DateTimeField(null=True, blank=True)
+
+    status = models.CharField(
+        max_length=32,
+        choices=[
+            ('pending_completion','Pending Completion'),
+            ('pending_allocation','Pending Allocation'),
+            ('allocated','Allocated'),               # to writer
+            ('in_progress','In Progress'),
+            ('processing_queue','Processing Queue'), # to process team
+            ('processing','Processing'),
+            ('submitted','Submitted'),
+            ('completed','Completed'),
+        ],
+        default='pending_completion'
+    )
+
     
     class Meta:
         ordering = ['-created_at']

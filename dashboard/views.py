@@ -237,65 +237,160 @@ def delete_user(request, user_id):
 
 
 @login_required
-def allocate_job_by_code(request, job_code):
-    # Only Allocator/Admin/Manager
-    if request.user.role not in ("allocator", "admin", "manager"):
-        messages.error(request, "You do not have permission to allocate jobs.")
-        return redirect("dashboard")
+def allocate_job_by_pk(request, job_id):
+    if request.user.role != 'allocator':
+        messages.error(request, 'You do not have permission to allocate jobs.')
+        return redirect('dashboard')
 
-    # Use the stable string key, pick the latest record for this job_id
+    job = get_object_or_404(Job, id=job_id)
+
+    if request.method == 'POST':
+        assignee_type = request.POST.get('assignee_type')  # 'writer' or 'process'
+        assignee_id = request.POST.get('assignee_id')
+
+        if not assignee_type or not assignee_id:
+            messages.error(request, 'Please choose an assignee.')
+            return redirect('dashboard')
+
+        assignee = get_object_or_404(CustomUser, id=assignee_id, role=assignee_type)
+
+        # only allow allocation if job is pending_allocation
+        if job.status not in ['pending_allocation']:
+            messages.warning(request, f'Job {job.job_id} is not pending allocation.')
+            return redirect('dashboard')
+
+        job.allocated_to = assignee
+        job.allocated_by = request.user
+        job.allocated_at = timezone.now()
+        job.status = 'allocated'
+        job.save()
+
+        messages.success(request, f'Job {job.job_id} allocated to {assignee.first_name} {assignee.last_name}.')
+        return redirect('dashboard')
+
+    return redirect('dashboard')
+
+
+@login_required
+def allocate_job_by_code(request, job_code):
+    if request.user.role != 'allocator':
+        messages.error(request, 'You do not have permission to allocate jobs.')
+        return redirect('dashboard')
+
+    # if some records have no numeric id available in the template, we fall back to string code
     job = (
         Job.objects.filter(job_id=job_code)
-        .order_by("-created_at")
+        .order_by('-created_at')
         .first()
     )
     if not job:
-        messages.error(request, f"Job {job_code} not found.")
-        return redirect("allocator_dashboard")
+        messages.error(request, 'Job not found for allocation.')
+        return redirect('dashboard')
 
-    if job.status not in ("pending_allocation", "pending_completion"):
-        messages.warning(request, "This job is not in a state that can be allocated.")
-        return redirect("allocator_dashboard")
+    if request.method == 'POST':
+        assignee_type = request.POST.get('assignee_type')
+        assignee_id = request.POST.get('assignee_id')
 
-    writer_id = request.POST.get("writer_id")
-    process_id = request.POST.get("process_id")
+        if not assignee_type or not assignee_id:
+            messages.error(request, 'Please choose an assignee.')
+            return redirect('dashboard')
 
-    if not writer_id and not process_id:
-        messages.error(request, "Please choose a Writer or a Process assignee.")
-        return redirect("allocator_dashboard")
+        assignee = get_object_or_404(CustomUser, id=assignee_id, role=assignee_type)
 
-    try:
-        if writer_id:
-            assignee = get_object_or_404(CustomUser, id=writer_id, role="writer")
-            job.allocated_to = assignee
-            job.status = "allocated"
+        if job.status not in ['pending_allocation']:
+            messages.warning(request, f'Job {job.job_id} is not pending allocation.')
+            return redirect('dashboard')
+
+        job.allocated_to = assignee
+        job.allocated_by = request.user
+        job.allocated_at = timezone.now()
+        job.status = 'allocated'
+        job.save()
+
+        messages.success(request, f'Job {job.job_id} allocated to {assignee.first_name} {assignee.last_name}.')
+        return redirect('dashboard')
+
+    return redirect('dashboard')
+
+@login_required
+def allocator_dashboard(request):
+    if request.user.role != 'allocator':
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('dashboard')  # your global dashboard
+
+    pending_jobs = Job.objects.filter(status='pending_allocation').order_by('-created_at')
+    allocated_jobs = Job.objects.filter(status__in=['allocated','in_progress']).order_by('-allocated_at')
+
+    # small stats example
+    stats = {
+        'pending_count': pending_jobs.count(),
+        'allocated_today': Job.objects.filter(
+            status__in=['allocated','in_progress'],
+            allocated_at__date=timezone.now().date()
+        ).count(),
+        'active_writers': CustomUser.objects.filter(role='writer', is_active=True).count(),
+        'overdue_count': Job.objects.filter(
+            status__in=['allocated','in_progress'],
+            expected_deadline__lt=timezone.now()
+        ).count(),
+    }
+
+    # load lists for the “Allocate” page links, not for a modal
+    writers = CustomUser.objects.filter(role='writer', is_active=True).order_by('first_name','last_name')
+    process_users = CustomUser.objects.filter(role='process', is_active=True).order_by('first_name','last_name')
+
+    ctx = {
+        'stats': stats,
+        'pending_jobs': pending_jobs,
+        'allocated_jobs': allocated_jobs,
+        'writers': writers,
+        'process_users': process_users,
+    }
+    return render(request, 'dashboard/allocator_dashboard.html', ctx)
+
+
+@login_required
+def allocate_job_page(request, pk: int):
+    """
+    A dedicated page to allocate one job either to a Writer or to a Process user.
+    If both are sent, Writer wins by design.
+    """
+    if request.user.role != 'allocator':
+        messages.error(request, 'You do not have permission to access this page.')
+        return redirect('dashboard')
+
+    job = get_object_or_404(Job, pk=pk, status='pending_allocation')
+
+    writers = CustomUser.objects.filter(role='writer', is_active=True).order_by('first_name','last_name')
+    process_users = CustomUser.objects.filter(role='process', is_active=True).order_by('first_name','last_name')
+
+    if request.method == 'POST':
+        writer_id = request.POST.get('writer_id') or ''
+        process_id = request.POST.get('process_id') or ''
+
+        if writer_id.strip():
+            writer = get_object_or_404(CustomUser, pk=writer_id, role='writer', is_active=True)
+            job.allocated_to = writer
             job.allocated_at = timezone.now()
-            job.save()
-            messages.success(
-                request,
-                f"Job {job.job_id} allocated to {assignee.first_name} {assignee.last_name}."
-            )
-        else:
-            # Process allocation requires process_owner field on Job (see earlier note)
-            assignee = get_object_or_404(CustomUser, id=process_id, role="process")
-            if hasattr(job, "process_owner"):
-                job.process_owner = assignee
-                job.status = "in_process_queue"
-                job.allocated_at = timezone.now()
-                job.save()
-                messages.success(
-                    request,
-                    f"Job {job.job_id} sent to Process: {assignee.first_name} {assignee.last_name}."
-                )
-            else:
-                messages.error(
-                    request,
-                    "Process allocation requires a 'process_owner' field on Job."
-                )
-                return redirect("allocator_dashboard")
+            job.status = 'allocated'
+            job.save(update_fields=['allocated_to','allocated_at','status'])
+            messages.success(request, f'Job {job.job_id} allocated to writer {writer.first_name}.')
+            return redirect('allocator_dashboard')
 
-    except Exception as e:
-        messages.error(request, f"Allocation failed: {e}")
-        return redirect("allocator_dashboard")
+        if process_id.strip():
+            puser = get_object_or_404(CustomUser, pk=process_id, role='process', is_active=True)
+            job.process_user = puser
+            job.process_assigned_at = timezone.now()
+            job.status = 'processing_queue'
+            job.save(update_fields=['process_user','process_assigned_at','status'])
+            messages.success(request, f'Job {job.job_id} placed in the Process queue for {puser.first_name}.')
+            return redirect('allocator_dashboard')
 
-    return redirect("allocator_dashboard")
+        messages.warning(request, 'Please select a Writer or a Process user.')
+        # fallthrough to re-render
+
+    return render(request, 'dashboard/allocate_job.html', {
+        'job': job,
+        'writers': writers,
+        'process_users': process_users,
+    })

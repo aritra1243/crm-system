@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'dashboard',
     'marketing',
     'writer',
+    'process',
 ]
 
 MIDDLEWARE = [

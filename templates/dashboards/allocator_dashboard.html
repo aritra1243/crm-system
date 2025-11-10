@@ -53,17 +53,17 @@
     </div>
 </div>
 
-<!-- Pending Jobs for Allocation -->
 {% if pending_jobs %}
 <div class="row mt-4">
     <div class="col-12">
         <div class="card border-warning">
             <div class="card-header bg-warning text-white">
-                <i class="fas fa-clock"></i> Jobs Pending Allocation ({{ pending_jobs.count }})
+                <i class="fas fa-clock"></i> Jobs Pending Allocation 
+                {% if pending_jobs.count %}({{ pending_jobs.count }}){% endif %}
             </div>
             <div class="card-body">
                 <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> Review and allocate jobs to writers below.
+                    <i class="fas fa-info-circle"></i> Review and allocate jobs to writers or process users below.
                 </div>
                 <div class="table-responsive">
                     <table class="table table-hover">
@@ -81,30 +81,27 @@
                         </thead>
                         <tbody>
                             {% for job in pending_jobs %}
+                            {% with modal_key=job.id|default:job.job_id %}
                             <tr>
                                 <td><strong>{{ job.job_id }}</strong></td>
                                 <td>{{ job.topic|default:"N/A"|truncatewords:5 }}</td>
                                 <td>{{ job.word_count|default:"N/A" }}</td>
-                                <td>₹{{ job.amount|default:"0"|floatformat:2 }}</td>
-                                <td>
-                                    <small>{{ job.expected_deadline|date:"M d, Y H:i" }}</small>
-                                </td>
-                                <td>
-                                    <small class="text-danger">{{ job.strict_deadline|date:"M d, Y H:i" }}</small>
-                                </td>
+                                <td>₹{{ job.amount|default:0|floatformat:2 }}</td>
+                                <td><small>{{ job.expected_deadline|date:"M d, Y H:i" }}</small></td>
+                                <td><small class="text-danger">{{ job.strict_deadline|date:"M d, Y H:i" }}</small></td>
                                 <td>{{ job.created_by.first_name }}</td>
                                 <td>
                                     <button type="button" class="btn btn-sm btn-primary" 
-                                            data-bs-toggle="modal" data-bs-target="#viewJobModal{{ job.id }}">
+                                            data-bs-toggle="modal" data-bs-target="#viewJobModal{{ modal_key }}">
                                         <i class="fas fa-eye"></i> View
                                     </button>
                                     <button type="button" class="btn btn-sm btn-success" 
-                                            data-bs-toggle="modal" data-bs-target="#allocateModal{{ job.id }}">
+                                            data-bs-toggle="modal" data-bs-target="#allocateModal{{ modal_key }}">
                                         <i class="fas fa-user-plus"></i> Allocate
                                     </button>
-                                    
+
                                     <!-- View Job Modal -->
-                                    <div class="modal fade" id="viewJobModal{{ job.id }}" tabindex="-1">
+                                    <div class="modal fade" id="viewJobModal{{ modal_key }}" tabindex="-1">
                                         <div class="modal-dialog modal-lg">
                                             <div class="modal-content">
                                                 <div class="modal-header bg-primary text-white">
@@ -126,22 +123,22 @@
                                                     {% if job.topic %}
                                                     <div class="mb-3">
                                                         <strong><i class="fas fa-heading me-2"></i>Topic:</strong>
-                                                        <p class="border p-2 bg-light">{{ job.topic }}</p>
+                                                        <p class="border p-2 bg-light mb-0">{{ job.topic }}</p>
                                                     </div>
                                                     {% endif %}
                                                     
                                                     <div class="row mb-3">
                                                         <div class="col-md-4">
                                                             <strong><i class="fas fa-sort-numeric-up me-2"></i>Word Count:</strong>
-                                                            <p>{{ job.word_count|default:"N/A" }}</p>
+                                                            <p class="mb-0">{{ job.word_count|default:"N/A" }}</p>
                                                         </div>
                                                         <div class="col-md-4">
                                                             <strong><i class="fas fa-book me-2"></i>Referencing:</strong>
-                                                            <p>{{ job.get_referencing_style_display|default:"N/A" }}</p>
+                                                            <p class="mb-0">{{ job.get_referencing_style_display|default:"N/A" }}</p>
                                                         </div>
                                                         <div class="col-md-4">
                                                             <strong><i class="fas fa-pen-fancy me-2"></i>Writing Style:</strong>
-                                                            <p>{{ job.get_writing_style_display|default:"N/A" }}</p>
+                                                            <p class="mb-0">{{ job.get_writing_style_display|default:"N/A" }}</p>
                                                         </div>
                                                     </div>
                                                     
@@ -160,15 +157,15 @@
                                                     <div class="row mb-3">
                                                         <div class="col-md-4">
                                                             <strong><i class="fas fa-calendar-alt me-2"></i>Expected Deadline:</strong>
-                                                            <p class="text-primary">{{ job.expected_deadline|date:"F d, Y H:i" }}</p>
+                                                            <p class="text-primary mb-0">{{ job.expected_deadline|date:"F d, Y H:i" }}</p>
                                                         </div>
                                                         <div class="col-md-4">
                                                             <strong><i class="fas fa-exclamation-triangle me-2"></i>Strict Deadline:</strong>
-                                                            <p class="text-danger">{{ job.strict_deadline|date:"F d, Y H:i" }}</p>
+                                                            <p class="text-danger mb-0">{{ job.strict_deadline|date:"F d, Y H:i" }}</p>
                                                         </div>
                                                         <div class="col-md-4">
                                                             <strong><i class="fas fa-rupee-sign me-2"></i>Amount:</strong>
-                                                            <p class="text-success">₹{{ job.amount|floatformat:2 }}</p>
+                                                            <p class="text-success mb-0">₹{{ job.amount|default:0|floatformat:2 }}</p>
                                                         </div>
                                                     </div>
                                                     
@@ -197,7 +194,7 @@
                                                 <div class="modal-footer">
                                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                                                     <button type="button" class="btn btn-success" data-bs-dismiss="modal" 
-                                                            data-bs-toggle="modal" data-bs-target="#allocateModal{{ job.id }}">
+                                                            data-bs-toggle="modal" data-bs-target="#allocateModal{{ modal_key }}">
                                                         <i class="fas fa-user-plus me-1"></i>Allocate This Job
                                                     </button>
                                                 </div>
@@ -206,74 +203,73 @@
                                     </div>
                                     
                                     <!-- Allocate Modal -->
-                                    <div class="modal fade" id="allocateModal{{ job.id }}" tabindex="-1">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                        <div class="modal-header bg-success text-white">
-                                            <h5 class="modal-title">Allocate Job: {{ job.job_id }}</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    <div class="modal fade" id="allocateModal{{ modal_key }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header bg-success text-white">
+                                                    <h5 class="modal-title">Allocate Job: {{ job.job_id }}</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                </div>
+
+                                                {# Prefer PK route when available. Fallback to string-code route. #}
+                                                <form method="post" action="{% if job.id %}{% url 'allocate_job' job.id %}{% else %}{% url 'allocate_job_by_code' job.job_id %}{% endif %}">
+                                                    {% csrf_token %}
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <strong>Job Summary:</strong>
+                                                            <ul class="list-unstyled ms-3">
+                                                                <li><strong>ID:</strong> {{ job.job_id }}</li>
+                                                                <li><strong>Word Count:</strong> {{ job.word_count }}</li>
+                                                                <li><strong>Amount:</strong> ₹{{ job.amount|default:0|floatformat:2 }}</li>
+                                                                <li><strong>Deadline:</strong> {{ job.expected_deadline|date:"M d, Y H:i" }}</li>
+                                                            </ul>
+                                                        </div>
+
+                                                        <div class="mb-3">
+                                                            <label class="form-label"><strong>Select Writer:</strong></label>
+                                                            <select name="writer_id" class="form-select">
+                                                                <option value="">-- Select Writer --</option>
+                                                                {% for writer in writers %}
+                                                                <option value="{{ writer.id }}">
+                                                                    {{ writer.first_name }} {{ writer.last_name }} ({{ writer.email }})
+                                                                </option>
+                                                                {% endfor %}
+                                                            </select>
+                                                            <small class="text-muted">Leave blank if assigning to Process instead.</small>
+                                                        </div>
+
+                                                        <div class="mb-3">
+                                                            <label class="form-label"><strong>Select Process User:</strong></label>
+                                                            <select name="process_id" class="form-select">
+                                                                <option value="">-- Select Process User --</option>
+                                                                {% for p in process_users %}
+                                                                <option value="{{ p.id }}">
+                                                                    {{ p.first_name }} {{ p.last_name }} ({{ p.email }})
+                                                                </option>
+                                                                {% endfor %}
+                                                            </select>
+                                                            <small class="text-muted">Leave blank if assigning to a Writer.</small>
+                                                        </div>
+
+                                                        <div class="alert alert-info">
+                                                            <i class="fas fa-info-circle"></i>
+                                                            Choose either a Writer or a Process user. If both are filled, Writer takes precedence.
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                                        <button type="submit" class="btn btn-success">
+                                                            <i class="fas fa-check"></i> Allocate Job
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                            </div>
                                         </div>
-
-                                        <!-- Update action to use the new allocate_job route -->
-                                        <form method="post" action="{% url 'allocate_job' job.id %}">
-                                            {% csrf_token %}
-                                            <div class="modal-body">
-                                            <div class="mb-3">
-                                                <strong>Job Summary:</strong>
-                                                <ul class="list-unstyled ms-3">
-                                                <li><strong>ID:</strong> {{ job.job_id }}</li>
-                                                <li><strong>Word Count:</strong> {{ job.word_count }}</li>
-                                                <li><strong>Amount:</strong> ₹{{ job.amount|floatformat:2 }}</li>
-                                                <li><strong>Deadline:</strong> {{ job.expected_deadline|date:"M d, Y H:i" }}</li>
-                                                </ul>
-                                            </div>
-
-                                            <!-- Choose one assignee: Writer or Process -->
-                                            <div class="mb-3">
-                                                <label class="form-label"><strong>Select Writer:</strong></label>
-                                                <select name="writer_id" class="form-select">
-                                                <option value="">-- Select Writer --</option>
-                                                {% for writer in writers %}
-                                                    <option value="{{ writer.id }}">
-                                                    {{ writer.first_name }} {{ writer.last_name }} ({{ writer.email }})
-                                                    </option>
-                                                {% endfor %}
-                                                </select>
-                                                <small class="text-muted">Leave blank if assigning to Process instead.</small>
-                                            </div>
-
-                                            <div class="mb-3">
-                                                <label class="form-label"><strong>Select Process User:</strong></label>
-                                                <select name="process_id" class="form-select">
-                                                <option value="">-- Select Process User --</option>
-                                                {% for p in process_users %}
-                                                    <option value="{{ p.id }}">
-                                                    {{ p.first_name }} {{ p.last_name }} ({{ p.email }})
-                                                    </option>
-                                                {% endfor %}
-                                                </select>
-                                                <small class="text-muted">Leave blank if assigning to a Writer.</small>
-                                            </div>
-
-                                            <div class="alert alert-info">
-                                                <i class="fas fa-info-circle"></i>
-                                                Choose either a Writer or a Process user. If both are filled, Writer takes precedence.
-                                            </div>
-                                            </div>
-
-                                            <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                            <button type="submit" class="btn btn-success">
-                                                <i class="fas fa-check"></i> Allocate Job
-                                            </button>
-                                            </div>
-                                        </form>
-              
-                                        </div>
-                                    </div>
                                     </div>
                                 </td>
                             </tr>
+                            {% endwith %}
                             {% endfor %}
                         </tbody>
                     </table>
@@ -293,7 +289,6 @@
 </div>
 {% endif %}
 
-<!-- Allocated Jobs -->
 {% if allocated_jobs %}
 <div class="row mt-4">
     <div class="col-12">
@@ -307,7 +302,7 @@
                         <thead>
                             <tr>
                                 <th>Job ID</th>
-                                <th>Writer</th>
+                                <th>Assignee</th>
                                 <th>Word Count</th>
                                 <th>Amount</th>
                                 <th>Allocated Date</th>
@@ -318,11 +313,12 @@
                         </thead>
                         <tbody>
                             {% for job in allocated_jobs %}
+                            {% with modal_key=job.id|default:job.job_id %}
                             <tr>
                                 <td><strong>{{ job.job_id }}</strong></td>
                                 <td>{{ job.allocated_to.first_name }} {{ job.allocated_to.last_name }}</td>
                                 <td>{{ job.word_count }}</td>
-                                <td>₹{{ job.amount|floatformat:2 }}</td>
+                                <td>₹{{ job.amount|default:0|floatformat:2 }}</td>
                                 <td>{{ job.allocated_at|date:"M d, Y H:i" }}</td>
                                 <td>
                                     <small {% if job.is_overdue %}class="text-danger fw-bold"{% endif %}>
@@ -337,15 +333,22 @@
                                     <span class="badge bg-info">Allocated</span>
                                     {% elif job.status == 'in_progress' %}
                                     <span class="badge bg-warning">In Progress</span>
+                                    {% elif job.status == 'submitted' %}
+                                    <span class="badge bg-primary">Submitted</span>
+                                    {% elif job.status == 'completed' %}
+                                    <span class="badge bg-success">Completed</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ job.get_status_display }}</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     <button type="button" class="btn btn-sm btn-info" 
-                                            data-bs-toggle="modal" data-bs-target="#viewJobModal{{ job.id }}">
+                                            data-bs-toggle="modal" data-bs-target="#viewJobModal{{ modal_key }}">
                                         <i class="fas fa-eye"></i> View
                                     </button>
                                 </td>
                             </tr>
+                            {% endwith %}
                             {% endfor %}
                         </tbody>
                     </table>

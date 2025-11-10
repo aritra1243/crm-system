@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Allocate {{ job.job_id }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <h2 class="mb-3"><i class="fas fa-user-plus text-success"></i> Allocate Job: {{ job.job_id }}</h2>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-7">
+    <div class="card mb-3">
+      <div class="card-header bg-success text-white">
+        Choose assignee
+      </div>
+      <form method="post">
+        {% csrf_token %}
+        <div class="card-body">
+          <div class="mb-3">
+            <label class="form-label"><strong>Select Writer</strong></label>
+            <select name="writer_id" class="form-select">
+              <option value="">-- Select Writer --</option>
+              {% for w in writers %}
+                <option value="{{ w.id }}">{{ w.first_name }} {{ w.last_name }} ({{ w.email }})</option>
+              {% endfor %}
+            </select>
+            <small class="text-muted">Leave empty if assigning to Process instead.</small>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label"><strong>Select Process User</strong></label>
+            <select name="process_id" class="form-select">
+              <option value="">-- Select Process User --</option>
+              {% for p in process_users %}
+                <option value="{{ p.id }}">{{ p.first_name }} {{ p.last_name }} ({{ p.email }})</option>
+              {% endfor %}
+            </select>
+            <small class="text-muted">If both are chosen, Writer wins.</small>
+          </div>
+
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Pick exactly one. If both are present, Writer is preferred.
+          </div>
+        </div>
+        <div class="card-footer d-flex gap-2">
+          <a href="{% url 'allocator_dashboard' %}" class="btn btn-secondary">Cancel</a>
+          <button type="submit" class="btn btn-success"><i class="fas fa-check"></i> Allocate Job</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header">
+        <i class="fas fa-file-alt"></i> Job Summary
+      </div>
+      <div class="card-body">
+        <ul class="list-unstyled">
+          <li><strong>ID:</strong> {{ job.job_id }}</li>
+          <li><strong>Topic:</strong> {{ job.topic|default:'N/A' }}</li>
+          <li><strong>Word Count:</strong> {{ job.word_count|default:'N/A' }}</li>
+          <li><strong>Amount:</strong> ₹{{ job.amount|default:'0'|floatformat:2 }}</li>
+          <li><strong>Deadline:</strong> {{ job.expected_deadline|date:"M d, Y H:i" }}</li>
+        </ul>
+
+        <div class="mb-2"><strong>Instructions:</strong></div>
+        <pre class="border p-2 bg-light" style="white-space: pre-wrap">{{ job.instructions }}</pre>
+
+        {% if job.completion_instructions %}
+          <div class="mb-2"><strong>Completion Instructions:</strong></div>
+          <pre class="border p-2 bg-light" style="white-space: pre-wrap">{{ job.completion_instructions }}</pre>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
