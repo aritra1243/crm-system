@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% block title %}Allocate Job - {{ job.job_id }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h2 class="mb-4">
+            <i class="fas fa-user-plus text-success"></i> Allocate Job: {{ job.job_id }}
+        </h2>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Allocation Form -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <i class="fas fa-users"></i> Select Assignee
+            </div>
+            <div class="card-body">
+                <form method="post" id="allocationForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="assigneeType" class="form-label">
+                            <strong><i class="fas fa-filter me-2"></i>Assign To:</strong>
+                        </label>
+                        <select name="assignee_type" id="assigneeType" class="form-select" required>
+                            <option value="">-- Select Assignment Type --</option>
+                            <option value="writer">Writer</option>
+                            <option value="process">Process User</option>
+                        </select>
+                        <small class="text-muted">Choose whether to assign to a Writer or Process user</small>
+                    </div>
+
+                    <div class="mb-3" id="assigneeContainer" style="display: none;">
+                        <label for="assigneeId" class="form-label">
+                            <strong><i class="fas fa-user me-2"></i>Select <span id="assigneeLabel">Person</span>:</strong>
+                        </label>
+                        <select name="assignee_id" id="assigneeId" class="form-select" required disabled>
+                            <option value="">-- Loading... --</option>
+                        </select>
+                        <small class="text-muted" id="assigneeHelp">Select the person to assign this job to</small>
+                    </div>
+
+                    <div id="loadingSpinner" class="text-center my-3" style="display: none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Loading assignees...</p>
+                    </div>
+
+                    <div id="alertContainer"></div>
+
+                    <div class="d-flex gap-2 mt-4">
+                        <a href="{% url 'dashboard' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success" id="submitBtn" disabled>
+                            <i class="fas fa-check me-1"></i> Allocate Job
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Job Summary -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-file-alt"></i> Job Summary
+            </div>
+            <div class="card-body">
+                <h5 class="text-primary"><i class="fas fa-hashtag me-2"></i>{{ job.job_id }}</h5>
+
+                {% if job.topic %}
+                <p><strong><i class="fas fa-heading me-2"></i>Topic:</strong></p>
+                <p class="border p-2 bg-light">{{ job.topic }}</p>
+                {% endif %}
+
+                <p><strong><i class="fas fa-sort-numeric-up me-2"></i>Word Count:</strong> {{ job.word_count }}</p>
+                <p><strong><i class="fas fa-rupee-sign me-2"></i>Amount:</strong> ₹{{ job.amount|default:0|floatformat:2 }}</p>
+                <p><strong><i class="fas fa-calendar-alt me-2"></i>Expected Deadline:</strong> {{ job.expected_deadline|date:"F d, Y H:i" }}</p>
+                <p><strong><i class="fas fa-exclamation-triangle me-2"></i>Strict Deadline:</strong> {{ job.strict_deadline|date:"F d, Y H:i" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const typeSelect = document.getElementById('assigneeType');
+    const container = document.getElementById('assigneeContainer');
+    const select = document.getElementById('assigneeId');
+    const label = document.getElementById('assigneeLabel');
+    const submitBtn = document.getElementById('submitBtn');
+    const spinner = document.getElementById('loadingSpinner');
+    const alertBox = document.getElementById('alertContainer');
+
+    typeSelect.addEventListener('change', function() {
+        const type = this.value;
+        if (!type) {
+            container.style.display = 'none';
+            select.disabled = true;
+            submitBtn.disabled = true;
+            return;
+        }
+
+        label.textContent = type === 'writer' ? 'Writer' : 'Process User';
+        spinner.style.display = 'block';
+        container.style.display = 'none';
+        submitBtn.disabled = true;
+
+        fetch(`{% url 'allocate:get_assignees' %}?type=${type}`)
+            .then(response => response.json())
+            .then(data => {
+                spinner.style.display = 'none';
+                if (data.error) {
+                    showAlert('Error loading assignees.', 'danger');
+                    return;
+                }
+
+                select.innerHTML = `<option value="">-- Select ${label.textContent} --</option>`;
+                data.assignees.forEach(a => {
+                    const option = document.createElement('option');
+                    option.value = a.id;
+                    option.textContent = `${a.first_name} ${a.last_name} (${a.email})`;
+                    select.appendChild(option);
+                });
+
+                container.style.display = 'block';
+                select.disabled = false;
+            })
+            .catch(() => {
+                spinner.style.display = 'none';
+                showAlert('Failed to load assignees.', 'danger');
+            });
+    });
+
+    select.addEventListener('change', function() {
+        submitBtn.disabled = !this.value;
+    });
+
+    function showAlert(message, type) {
+        alertBox.innerHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                <i class="fas fa-exclamation-circle me-2"></i>${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+    }
+});
+</script>
+{% endblock %}

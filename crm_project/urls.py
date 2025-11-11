@@ -28,6 +28,8 @@ urlpatterns = [
     path('marketing/', include('marketing.urls')),
     path('writer/', include('writer.urls')),
     path('process/', include('process.urls')),
+    path('allocate/', include('allocate.urls', namespace='allocate')),
+
 
 ]
 
