@@ -77,7 +77,7 @@
                         <td><strong class="text-primary">{{ job.job_id }}</strong></td>
                         <td>{{ job.topic|default:"N/A"|truncatewords:5 }}</td>
                         <td>{{ job.word_count|default:"N/A" }}</td>
-                        <td>&#8377; {{ job.amount|default:0|floatformat:2 }}</td>
+                        <td>₹{{ job.amount|default:0|floatformat:2 }}</td>
                         <td><small class="text-info">{{ job.expected_deadline|date:"M d, Y H:i" }}</small></td>
                         <td><small class="text-danger">{{ job.strict_deadline|date:"M d, Y H:i" }}</small></td>
                         <td>{{ job.created_by.first_name }} {{ job.created_by.last_name }}</td>
@@ -164,7 +164,7 @@
                                         </div>
                                         <div class="col-md-4">
                                             <strong><i class="fas fa-rupee-sign me-2"></i>Amount:</strong>
-                                            <p class="text-success">&#8377; {{ job.amount|default:0|floatformat:2 }}</p>
+                                            <p class="text-success">₹{{ job.amount|default:0|floatformat:2 }}</p>
                                         </div>
                                     </div>
 
@@ -200,7 +200,8 @@
                                     </h5>
                                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
-                                <form method="post" action="{% if job.pk %}{% url 'allocate:allocate_job' job.pk %}{% else %}#{% endif %}" id="allocateForm{{ job.pk|default:job.job_id }}" data-job-pk="{{ job.pk }}">
+                                <form method="post" action="{% if job.pk %}{% url 'allocate:allocate_job' job.pk %}{% else %}#{% endif %}" id="allocateForm{{ job.pk|default:job.job_id }}">
+
                                     {% csrf_token %}
                                     <div class="modal-body">
                                         <!-- Job Summary -->
@@ -209,7 +210,7 @@
                                             <ul class="mb-0 mt-2">
                                                 <li><strong>ID:</strong> {{ job.job_id }}</li>
                                                 <li><strong>Word Count:</strong> {{ job.word_count }}</li>
-                                                <li><strong>Amount:</strong> &#8377; {{ job.amount|default:0|floatformat:2 }}</li>
+                                                <li><strong>Amount:</strong> ₹{{ job.amount|default:0|floatformat:2 }}</li>
                                                 <li><strong>Deadline:</strong> {{ job.expected_deadline|date:"M d, Y H:i" }}</li>
                                             </ul>
                                         </div>
@@ -221,8 +222,7 @@
                                             </label>
                                             <select name="assignee_type" 
                                                     id="assigneeType{{ job.pk }}" 
-                                                    class="form-select assignee-type-select" 
-                                                    data-job-pk="{{ job.pk }}"
+                                                    class="form-select" 
                                                     required>
                                                 <option value="">-- Select Type --</option>
                                                 <option value="writer">Writer</option>
@@ -232,14 +232,13 @@
                                         </div>
 
                                         <!-- Assignee Dropdown (populated dynamically) -->
-                                        <div class="mb-3 assignee-container" id="assigneeContainer{{ job.pk }}" data-job-pk="{{ job.pk }}" style="display: none;">
+                                        <div class="mb-3" id="assigneeContainer{{ job.pk }}" style="display: none;">
                                             <label class="form-label" for="assigneeSelect{{ job.pk }}">
-                                                <strong><i class="fas fa-user me-2"></i>Select <span id="assigneeLabel{{ job.pk }}" class="assignee-label" data-job-pk="{{ job.pk }}">Person</span>:</strong>
+                                                <strong><i class="fas fa-user me-2"></i>Select <span id="assigneeLabel{{ job.pk }}">Person</span>:</strong>
                                             </label>
                                             <select name="assignee_id" 
                                                     id="assigneeSelect{{ job.pk }}" 
-                                                    class="form-select assignee-select" 
-                                                    data-job-pk="{{ job.pk }}"
+                                                    class="form-select" 
                                                     required 
                                                     disabled>
                                                 <option value="">-- Loading... --</option>
@@ -248,7 +247,7 @@
                                         </div>
 
                                         <!-- Loading Spinner -->
-                                        <div id="loadingSpinner{{ job.pk }}" class="text-center my-3 loading-spinner" data-job-pk="{{ job.pk }}" style="display: none;">
+                                        <div id="loadingSpinner{{ job.pk }}" class="text-center my-3" style="display: none;">
                                             <div class="spinner-border text-primary" role="status">
                                                 <span class="visually-hidden">Loading...</span>
                                             </div>
@@ -264,8 +263,7 @@
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                                         <button type="submit" 
-                                                class="btn btn-success allocate-submit" 
-                                                data-job-pk="{{ job.pk }}"
+                                                class="btn btn-success" 
                                                 id="submitBtn{{ job.pk }}" 
                                                 disabled>
                                             <i class="fas fa-check me-1"></i>Allocate Job
@@ -324,7 +322,7 @@
                             {% endif %}
                         </td>
                         <td>{{ job.word_count }}</td>
-                        <td>&#8377; {{ job.amount|default:0|floatformat:2 }}</td>
+                        <td>₹{{ job.amount|default:0|floatformat:2 }}</td>
                         <td><small>{{ job.allocated_at|date:"M d, Y H:i" }}</small></td>
                         <td>
                             <small{% if job.expected_deadline < now %} class="text-danger fw-bold"{% endif %}>
@@ -379,7 +377,7 @@
                         <td><strong>{{ job.job_id }}</strong></td>
                         <td>{{ job.allocated_to.first_name }} {{ job.allocated_to.last_name }}</td>
                         <td>{{ job.word_count }}</td>
-                        <td>&#8377; {{ job.amount|default:0|floatformat:2 }}</td>
+                        <td>₹{{ job.amount|default:0|floatformat:2 }}</td>
                         <td><small>{{ job.updated_at|date:"M d, Y H:i" }}</small></td>
                     </tr>
                     {% endfor %}
@@ -392,73 +390,81 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    var typeSelects = document.querySelectorAll('.assignee-type-select');
-    if (!typeSelects.length) {
-        return;
-    }
+    var forms = document.querySelectorAll('form[id^="allocateForm"]');
+    forms.forEach(function(form) {
+        var submitBtn = form.querySelector('.allocate-submit');
+        var typeSelect = form.querySelector('.assignee-type-select');
+        var writerSelect = form.querySelector('.writer-select');
+        var processSelect = form.querySelector('.process-select');
+        var writerGroup = form.querySelector('.assignee-writer-group');
+        var processGroup = form.querySelector('.assignee-process-group');
 
-    typeSelects.forEach(function(select) {
-        var jobPk = select.dataset.jobPk;
-        var assigneeContainer = document.querySelector('.assignee-container[data-job-pk="' + jobPk + '"]');
-        var assigneeSelect = document.querySelector('.assignee-select[data-job-pk="' + jobPk + '"]');
-        var assigneeLabel = document.querySelector('.assignee-label[data-job-pk="' + jobPk + '"]');
-        var submitBtn = document.querySelector('.allocate-submit[data-job-pk="' + jobPk + '"]');
-        var loadingSpinner = document.querySelector('.loading-spinner[data-job-pk="' + jobPk + '"]');
-
-        if (!assigneeContainer || !assigneeSelect || !assigneeLabel || !submitBtn || !loadingSpinner) {
+        if (!submitBtn) {
             return;
         }
 
-        select.addEventListener('change', function() {
-            var selectedType = this.value;
-
-            if (!selectedType) {
-                assigneeContainer.style.display = 'none';
-                assigneeSelect.disabled = true;
-                submitBtn.disabled = true;
+        function syncGroupVisibility(groupEl, selectEl, shouldShow) {
+            if (!groupEl || !selectEl) {
                 return;
             }
+            if (shouldShow) {
+                groupEl.classList.remove('d-none');
+                groupEl.style.display = 'block';
+                selectEl.disabled = false;
+                selectEl.required = true;
+            } else {
+                groupEl.classList.add('d-none');
+                groupEl.style.display = 'none';
+                selectEl.disabled = true;
+                selectEl.required = false;
+                selectEl.value = '';
+            }
+        }
 
-            assigneeLabel.textContent = selectedType === 'writer' ? 'Writer' : 'Process User';
-            loadingSpinner.style.display = 'block';
-            assigneeContainer.style.display = 'none';
-            submitBtn.disabled = true;
+        function toggleSubmit() {
+            var hasSelection = false;
+            if (typeSelect && typeSelect.value === 'writer') {
+                hasSelection = writerSelect && writerSelect.value;
+            } else if (typeSelect && typeSelect.value === 'process') {
+                hasSelection = processSelect && processSelect.value;
+            }
+            submitBtn.disabled = !hasSelection;
+        }
 
-            var url = '{% url "allocate:get_assignees" %}?type=' + encodeURIComponent(selectedType);
-            fetch(url)
-                .then(function(response) {
-                    return response.json();
-                })
-                .then(function(data) {
-                    loadingSpinner.style.display = 'none';
+        function showGroup(type) {
+            syncGroupVisibility(writerGroup, writerSelect, type === 'writer');
+            syncGroupVisibility(processGroup, processSelect, type === 'process');
+            toggleSubmit();
+        }
 
-                    if (data.error) {
-                        alert('Error loading assignees. Please try again.');
-                        return;
-                    }
+        if (typeSelect) {
+            typeSelect.addEventListener('change', function(e) {
+                showGroup(e.target.value);
+            });
+            typeSelect.value = '';
+        }
 
-                    assigneeSelect.innerHTML = '<option value="">-- Select ' + assigneeLabel.textContent + ' --</option>';
+        if (writerSelect) {
+            writerSelect.addEventListener('change', toggleSubmit);
+        }
+        if (processSelect) {
+            processSelect.addEventListener('change', toggleSubmit);
+        }
 
-                    data.assignees.forEach(function(assignee) {
-                        var option = document.createElement('option');
-                        option.value = assignee.id;
-                        option.textContent = assignee.first_name + ' ' + assignee.last_name + ' (' + assignee.email + ')';
-                        assigneeSelect.appendChild(option);
-                    });
+        var modalElement = form.closest('.modal');
+        if (modalElement) {
+            modalElement.addEventListener('hidden.bs.modal', function() {
+                if (typeSelect) {
+                    typeSelect.value = '';
+                }
+                showGroup('');
+            });
+            modalElement.addEventListener('shown.bs.modal', function() {
+                showGroup(typeSelect ? typeSelect.value : '');
+            });
+        }
 
-                    assigneeContainer.style.display = 'block';
-                    assigneeSelect.disabled = false;
-                })
-                .catch(function(error) {
-                    loadingSpinner.style.display = 'none';
-                    alert('Failed to load assignees. Please try again.');
-                    console.error('Error:', error);
-                });
-        });
-
-        assigneeSelect.addEventListener('change', function() {
-            submitBtn.disabled = !this.value;
-        });
+        showGroup('');
     });
 });
 </script>

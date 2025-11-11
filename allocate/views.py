@@ -16,7 +16,7 @@ def allocate_job_view(request, job_id):
         messages.error(request, 'You do not have permission to allocate jobs.')
         return redirect('dashboard')
     
-    job = get_object_or_404(Job, pk=job_id, status='pending_allocation')
+    job = get_object_or_404(Job, pk=job_id)
     
     if request.method == 'POST':
         assignee_type = request.POST.get('assignee_type')
@@ -49,20 +49,10 @@ def allocate_job_view(request, job_id):
                 f'Job {job.job_id} successfully allocated to writer {assignee.first_name} {assignee.last_name}.'
             )
         elif assignee_type == 'process':
-            # Check if your Job model has process_user and process_assigned_at fields
-            if hasattr(job, 'process_user'):
-                job.process_user = assignee
-                job.process_assigned_at = timezone.now()
-                job.status = 'processing_queue'
-                job.save(update_fields=['process_user', 'process_assigned_at', 'status'])
-            else:
-                # Fallback: use allocated_to for process users too
-                job.allocated_to = assignee
-                job.allocated_by = request.user
-                job.allocated_at = timezone.now()
-                job.status = 'allocated'
-                job.save(update_fields=['allocated_to', 'allocated_by', 'allocated_at', 'status'])
-            
+            job.process_user = assignee
+            job.process_assigned_at = timezone.now()
+            job.status = 'processing_queue'
+            job.save(update_fields=['process_user', 'process_assigned_at', 'status'])
             messages.success(
                 request, 
                 f'Job {job.job_id} successfully assigned to process user {assignee.first_name} {assignee.last_name}.'

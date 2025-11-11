@@ -61,12 +61,25 @@ def dashboard_view(request):
             status='completed'
         ).order_by('-updated_at')[:10]
         
+        # Get writers and process users for allocation
+        context['writers'] = CustomUser.objects.filter(
+            role='writer',
+            is_active=True,
+            approval_status='approved'
+        ).order_by('first_name', 'last_name')
+        
+        context['process_users'] = CustomUser.objects.filter(
+            role='process',
+            is_active=True,
+            approval_status='approved'
+        ).order_by('first_name', 'last_name')
+        
         # Statistics
         now = timezone.now()
         start_of_today = timezone.localtime(now).replace(hour=0, minute=0, second=0, microsecond=0)
         end_of_today = start_of_today + timedelta(days=1)
         
-        context['now'] = now  # Add current time for template comparison
+        context['now'] = now
         
         context['stats'] = {
             'pending_count': Job.objects.filter(status='pending_allocation').count(),
