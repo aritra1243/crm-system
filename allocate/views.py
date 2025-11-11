@@ -6,7 +6,6 @@ from django.http import JsonResponse
 from authentication.models import CustomUser
 from marketing.models import Job
 
-
 @login_required
 def allocate_job_view(request, job_id):
     """
@@ -15,17 +14,17 @@ def allocate_job_view(request, job_id):
     if request.user.role != 'allocator':
         messages.error(request, 'You do not have permission to allocate jobs.')
         return redirect('dashboard')
-    
+   
     job = get_object_or_404(Job, pk=job_id)
-    
+   
     if request.method == 'POST':
         assignee_type = request.POST.get('assignee_type')
         assignee_id = request.POST.get('assignee_id')
-        
+       
         if not assignee_type or not assignee_id:
             messages.error(request, 'Please select both assignment type and assignee.')
             return redirect('dashboard')
-        
+       
         try:
             assignee = CustomUser.objects.get(
                 id=assignee_id,
@@ -36,7 +35,7 @@ def allocate_job_view(request, job_id):
         except CustomUser.DoesNotExist:
             messages.error(request, 'Invalid assignee selected.')
             return redirect('dashboard')
-        
+       
         # Allocate based on type
         if assignee_type == 'writer':
             job.allocated_to = assignee
@@ -45,7 +44,7 @@ def allocate_job_view(request, job_id):
             job.status = 'allocated'
             job.save(update_fields=['allocated_to', 'allocated_by', 'allocated_at', 'status'])
             messages.success(
-                request, 
+                request,
                 f'Job {job.job_id} successfully allocated to writer {assignee.first_name} {assignee.last_name}.'
             )
         elif assignee_type == 'process':
@@ -54,15 +53,14 @@ def allocate_job_view(request, job_id):
             job.status = 'processing_queue'
             job.save(update_fields=['process_user', 'process_assigned_at', 'status'])
             messages.success(
-                request, 
+                request,
                 f'Job {job.job_id} successfully assigned to process user {assignee.first_name} {assignee.last_name}.'
             )
-        
+       
         return redirect('dashboard')
-    
+   
     # GET request - redirect to dashboard
     return redirect('dashboard')
-
 
 @login_required
 def get_assignees_ajax(request):
@@ -71,16 +69,16 @@ def get_assignees_ajax(request):
     """
     if request.user.role != 'allocator':
         return JsonResponse({'error': 'Unauthorized'}, status=403)
-    
+   
     assignee_type = request.GET.get('type')
-    
+   
     if assignee_type not in ['writer', 'process']:
         return JsonResponse({'error': 'Invalid type'}, status=400)
-    
+   
     users = CustomUser.objects.filter(
         role=assignee_type,
         is_active=True,
         approval_status='approved'
     ).values('id', 'first_name', 'last_name', 'email').order_by('first_name', 'last_name')
-    
+   
     return JsonResponse({'assignees': list(users)})
